@@ -1,0 +1,42 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        // Читать и писать в свой профиль может только сам пользователь
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid",
+
+        // Баланс: читать может только владелец, писать НЕЛЬЗЯ напрямую
+        // (баланс меняется только через admin или functions)
+        "balance": {
+          ".write": false
+        },
+
+        "inventory": {
+          ".read": "$uid === auth.uid",
+          ".write": "$uid === auth.uid"
+        },
+
+        "stats": {
+          ".read": "$uid === auth.uid",
+          ".write": "$uid === auth.uid"
+        }
+      }
+    },
+
+    "upgrades": {
+      // Читать могут все авторизованные
+      ".read": "auth !== null",
+      // Писать можно только авторизованным, и только свои записи
+      "$upgradeId": {
+        ".write": "auth !== null && (data.child('uid').val() === auth.uid || !data.exists())"
+      }
+    },
+
+    "admin_logs": {
+      // Читать могут все авторизованные (в продакшене — ограничить только для admins)
+      ".read": "auth !== null",
+      ".write": "auth !== null"
+    }
+  }
+}

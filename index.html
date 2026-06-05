@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CS2 UPGRADE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast-container"></div>
+
+<!-- LOADING SCREEN -->
+<div id="loading-screen">
+  <div class="loading-logo">CS2<span>UPGRADE</span></div>
+  <div class="loading-bar"><div class="loading-fill"></div></div>
+  <div class="loading-text">ИНИЦИАЛИЗАЦИЯ...</div>
+</div>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen" class="hidden">
+  <div class="auth-bg"></div>
+  <div class="auth-container">
+    <div class="auth-logo">CS2<span>UPGRADE</span></div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="login">ВХОД</button>
+      <button class="auth-tab" data-tab="register">РЕГИСТРАЦИЯ</button>
+    </div>
+
+    <div id="login-form" class="auth-form">
+      <div class="field-group">
+        <label>EMAIL</label>
+        <input type="email" id="login-email" placeholder="your@email.com" />
+      </div>
+      <div class="field-group">
+        <label>ПАРОЛЬ</label>
+        <input type="password" id="login-password" placeholder="••••••••" />
+      </div>
+      <button class="btn-primary" id="login-btn">ВОЙТИ</button>
+    </div>
+
+    <div id="register-form" class="auth-form hidden">
+      <div class="field-group">
+        <label>НИКНЕЙМ</label>
+        <input type="text" id="reg-nickname" placeholder="PlayerOne" />
+      </div>
+      <div class="field-group">
+        <label>EMAIL</label>
+        <input type="email" id="reg-email" placeholder="your@email.com" />
+      </div>
+      <div class="field-group">
+        <label>ПАРОЛЬ</label>
+        <input type="password" id="reg-password" placeholder="••••••••" />
+      </div>
+      <button class="btn-primary" id="register-btn">СОЗДАТЬ АККАУНТ</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" class="hidden">
+
+  <!-- SIDEBAR -->
+  <nav id="sidebar">
+    <div class="sidebar-logo">CS2<span>UP</span></div>
+    <ul class="nav-links">
+      <li><a href="#" data-page="upgrade" class="nav-link active">
+        <span class="nav-icon">⚡</span><span class="nav-label">АПГРЕЙД</span>
+      </a></li>
+      <li><a href="#" data-page="inventory" class="nav-link">
+        <span class="nav-icon">🎒</span><span class="nav-label">ИНВЕНТАРЬ</span>
+      </a></li>
+      <li><a href="#" data-page="history" class="nav-link">
+        <span class="nav-icon">📜</span><span class="nav-label">ИСТОРИЯ</span>
+      </a></li>
+      <li><a href="#" data-page="stats" class="nav-link">
+        <span class="nav-icon">📊</span><span class="nav-label">СТАТИСТИКА</span>
+      </a></li>
+      <li><a href="#" data-page="profile" class="nav-link">
+        <span class="nav-icon">👤</span><span class="nav-label">ПРОФИЛЬ</span>
+      </a></li>
+      <li id="admin-nav-item" class="hidden"><a href="#" data-page="admin" class="nav-link admin-link">
+        <span class="nav-icon">🛡️</span><span class="nav-label">АДМИН</span>
+      </a></li>
+    </ul>
+    <div class="sidebar-user">
+      <div class="user-balance">
+        <span class="balance-label">БАЛАНС</span>
+        <span class="balance-value" id="sidebar-balance">$0.00</span>
+      </div>
+      <button class="btn-logout" id="logout-btn">ВЫЙТИ</button>
+    </div>
+  </nav>
+
+  <!-- BURGER -->
+  <button id="burger-btn" class="burger-btn">☰</button>
+
+  <!-- PAGES -->
+  <main id="main-content">
+
+    <!-- UPGRADE PAGE -->
+    <div id="page-upgrade" class="page active">
+      <div class="page-header">
+        <h1>АПГРЕЙД СКИНОВ</h1>
+        <p class="page-sub">Выберите предмет и шанс для улучшения</p>
+      </div>
+      <div class="upgrade-layout">
+
+        <!-- SOURCE ITEM -->
+        <div class="upgrade-panel source-panel">
+          <h3>ВАШИ ПРЕДМЕТЫ</h3>
+          <div class="search-bar">
+            <input type="text" id="source-search" placeholder="Поиск по названию..." />
+          </div>
+          <div class="items-scroll" id="source-items-list">
+            <div class="empty-state">Инвентарь пуст</div>
+          </div>
+          <div class="selected-item-display" id="source-selected">
+            <div class="no-item">Предмет не выбран</div>
+          </div>
+        </div>
+
+        <!-- UPGRADE CENTER -->
+        <div class="upgrade-center">
+          <!-- ROULETTE -->
+          <div class="roulette-wrap">
+            <canvas id="roulette-canvas" width="280" height="280"></canvas>
+            <div class="roulette-arrow" id="roulette-arrow">▼</div>
+          </div>
+
+          <!-- CHANCE BUTTONS -->
+          <div class="chance-buttons">
+            <button class="chance-btn" data-chance="3">3%</button>
+            <button class="chance-btn" data-chance="5">5%</button>
+            <button class="chance-btn" data-chance="10">10%</button>
+            <button class="chance-btn active" data-chance="30">30%</button>
+            <button class="chance-btn" data-chance="50">2×</button>
+          </div>
+
+          <div class="chance-display">
+            ШАНС: <span id="current-chance-val">30%</span>
+          </div>
+
+          <button class="btn-upgrade" id="upgrade-btn" disabled>
+            <span class="upgrade-btn-text">АПГРЕЙД</span>
+            <span class="upgrade-btn-shine"></span>
+          </button>
+        </div>
+
+        <!-- TARGET ITEM -->
+        <div class="upgrade-panel target-panel">
+          <h3>ЦЕЛЕВОЙ ПРЕДМЕТ</h3>
+          <div class="search-bar">
+            <input type="text" id="target-search" placeholder="Поиск по названию..." />
+          </div>
+          <div class="items-scroll" id="target-items-list">
+            <div class="loading-items">Загрузка предметов...</div>
+          </div>
+          <div class="selected-item-display" id="target-selected">
+            <div class="no-item">Предмет не выбран</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- INVENTORY PAGE -->
+    <div id="page-inventory" class="page">
+      <div class="page-header">
+        <h1>ИНВЕНТАРЬ</h1>
+        <p class="page-sub">Ваши скины CS2</p>
+      </div>
+      <div class="inventory-filters">
+        <input type="text" id="inv-search" placeholder="🔍 Поиск..." class="filter-input" />
+        <select id="inv-sort" class="filter-select">
+          <option value="price-desc">Цена ↓</option>
+          <option value="price-asc">Цена ↑</option>
+          <option value="name-asc">Название A-Z</option>
+        </select>
+        <select id="inv-rarity" class="filter-select">
+          <option value="">Все редкости</option>
+          <option value="Consumer Grade">Consumer Grade</option>
+          <option value="Industrial Grade">Industrial Grade</option>
+          <option value="Mil-Spec">Mil-Spec</option>
+          <option value="Restricted">Restricted</option>
+          <option value="Classified">Classified</option>
+          <option value="Covert">Covert</option>
+        </select>
+      </div>
+      <div class="inventory-total">
+        Предметов: <span id="inv-count">0</span> | Стоимость: <span id="inv-total-value">$0.00</span>
+      </div>
+      <div class="items-grid" id="inventory-grid">
+        <div class="empty-state">Инвентарь пуст</div>
+      </div>
+    </div>
+
+    <!-- HISTORY PAGE -->
+    <div id="page-history" class="page">
+      <div class="page-header">
+        <h1>ИСТОРИЯ АПГРЕЙДОВ</h1>
+        <p class="page-sub">Все ваши улучшения</p>
+      </div>
+      <div class="history-list" id="history-list">
+        <div class="empty-state">История пуста</div>
+      </div>
+    </div>
+
+    <!-- STATS PAGE -->
+    <div id="page-stats" class="page">
+      <div class="page-header">
+        <h1>СТАТИСТИКА</h1>
+        <p class="page-sub">Ваши результаты</p>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-val" id="st-total">0</div><div class="stat-lbl">АПГРЕЙДОВ</div></div>
+        <div class="stat-card win"><div class="stat-val" id="st-wins">0</div><div class="stat-lbl">ПОБЕД</div></div>
+        <div class="stat-card lose"><div class="stat-val" id="st-losses">0</div><div class="stat-lbl">ПОРАЖЕНИЙ</div></div>
+        <div class="stat-card"><div class="stat-val" id="st-winrate">0%</div><div class="stat-lbl">WIN RATE</div></div>
+      </div>
+      <div class="stats-records">
+        <div class="record-card">
+          <div class="record-title">🏆 ЛУЧШИЙ ВЫИГРЫШ</div>
+          <div class="record-item" id="st-best-win">—</div>
+        </div>
+        <div class="record-card">
+          <div class="record-title">💀 ХУДШИЙ ПРОИГРЫШ</div>
+          <div class="record-item" id="st-worst-loss">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFILE PAGE -->
+    <div id="page-profile" class="page">
+      <div class="page-header">
+        <h1>ПРОФИЛЬ</h1>
+      </div>
+      <div class="profile-card">
+        <div class="profile-avatar" id="profile-avatar">?</div>
+        <div class="profile-info">
+          <div class="profile-nick" id="profile-nick">—</div>
+          <div class="profile-email" id="profile-email">—</div>
+          <div class="profile-stats-row">
+            <div class="ps-item"><span id="p-wins">0</span><small>ПОБЕД</small></div>
+            <div class="ps-item"><span id="p-losses">0</span><small>ПОРАЖЕНИЙ</small></div>
+            <div class="ps-item"><span id="p-winrate">0%</span><small>WIN RATE</small></div>
+            <div class="ps-item"><span id="p-balance">$0.00</span><small>БАЛАНС</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN PAGE -->
+    <div id="page-admin" class="page">
+      <div class="page-header">
+        <h1>🛡️ АДМИН-ПАНЕЛЬ</h1>
+      </div>
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-atab="users">ПОЛЬЗОВАТЕЛИ</button>
+        <button class="admin-tab" data-atab="logs">ЛОГИ</button>
+      </div>
+
+      <div id="atab-users" class="admin-content active">
+        <div class="admin-search">
+          <input type="text" id="admin-user-search" placeholder="Поиск пользователя..." />
+          <button class="btn-secondary" id="admin-load-users">Загрузить</button>
+        </div>
+        <div id="admin-users-list" class="admin-users-list"></div>
+      </div>
+
+      <div id="atab-logs" class="admin-content">
+        <div id="admin-logs-list" class="admin-logs-list">
+          <button class="btn-secondary" id="load-logs-btn">Загрузить логи</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- UPGRADE RESULT MODAL -->
+<div id="result-modal" class="modal hidden">
+  <div class="modal-overlay"></div>
+  <div class="modal-box">
+    <div class="modal-result-icon" id="modal-result-icon">🏆</div>
+    <div class="modal-result-title" id="modal-result-title">ПОБЕДА!</div>
+    <div class="modal-result-item" id="modal-result-item"></div>
+    <button class="btn-primary" id="modal-close-btn">ПРОДОЛЖИТЬ</button>
+  </div>
+</div>
+
+<!-- ADMIN BALANCE MODAL -->
+<div id="balance-modal" class="modal hidden">
+  <div class="modal-overlay"></div>
+  <div class="modal-box">
+    <h3 id="balance-modal-title">ИЗМЕНИТЬ БАЛАНС</h3>
+    <div class="field-group">
+      <label>СУММА ($)</label>
+      <input type="number" id="balance-amount" placeholder="0.00" step="0.01" />
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn-primary" id="balance-add-btn">ПОПОЛНИТЬ</button>
+      <button class="btn-danger" id="balance-remove-btn">СПИСАТЬ</button>
+      <button class="btn-secondary" id="balance-cancel-btn">ОТМЕНА</button>
+    </div>
+  </div>
+</div>
+
+<!-- FIREBASE SDKs -->
+<script type="module" src="js/firebase-config.js"></script>
+<script type="module" src="js/auth.js"></script>
+<script type="module" src="js/db.js"></script>
+<script type="module" src="js/items.js"></script>
+<script type="module" src="js/upgrade.js"></script>
+<script type="module" src="js/ui.js"></script>
+<script type="module" src="js/admin.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
