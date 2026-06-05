@@ -1,11 +1,6 @@
 // js/items.js
-// CSFloat API integration + fallback mock data
+const CSFLOAT_API_KEY = "8_FPa9KzhoP_-1QZMdv8pTn8EaXNlVY_";
 
-// CSFloat API endpoint (CORS proxy needed for browser)
-// В продакшене используйте свой backend/Firebase Function как прокси
-const CSFLOAT_API = "https://csfloat.com/api/v1";
-
-// Fallback данные (используются если API недоступен)
 const MOCK_ITEMS = [
   { id: "ak47_redline", name: "AK-47 | Redline", price: 15.20, rarity: "Classified", weapon: "AK-47", image: "https://community.cloudflare.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX3oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpot7HxfDhjxszOeC9H_9mkhIWFg8j1OO-GqWlD6dN-teHE9Jrs0Fo8rRpkYWn1JoKUJlQ4NQzX_FTqwOrqhZa5tJuLnHU8pSghCEig/360fx360f" },
   { id: "m4a4_temukau", name: "M4A4 | 龍王 (Dragon King)", price: 45.00, rarity: "Covert", weapon: "M4A4", image: "https://community.cloudflare.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX3oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpou-6kejhz2v_Nfz5H_uO1gb-Gw_alIITCmX5d_MQijLqSqNP3i1Ky5kRrZG3yIoaVdlVqNQ/360fx360f" },
@@ -27,29 +22,28 @@ const MOCK_ITEMS = [
 
 let cachedItems = null;
 
-// Загрузка предметов (сначала CSFloat, при ошибке — mock)
 export async function loadMarketItems() {
   if (cachedItems) return cachedItems;
-
   try {
-    // Попытка загрузить через CSFloat API
-    // В реальном проекте нужен прокси-сервер или Firebase Function
-    // const items = await fetchCSFloatItems();
-    // cachedItems = items;
-    throw new Error("Direct API not available - using mock data");
+    const items = await fetchCSFloatItems();
+    cachedItems = items;
+    return items;
   } catch (e) {
-    console.log("Using mock items:", e.message);
+    console.warn("CSFloat недоступен, используются тестовые данные:", e.message);
     cachedItems = MOCK_ITEMS;
     return MOCK_ITEMS;
   }
 }
 
-// CSFloat API (требует прокси или backend)
 async function fetchCSFloatItems() {
-  const response = await fetch(`${CSFLOAT_API}/listings?sort_by=most_recent&limit=50`, {
-    headers: { "Authorization": "YOUR_CSFLOAT_API_KEY" }
-  });
-  if (!response.ok) throw new Error("CSFloat API error");
+  const targetUrl = encodeURIComponent(
+    "https://csfloat.com/api/v1/listings?sort_by=most_recent&limit=50"
+  );
+  const response = await fetch(
+    `https://corsproxy.io/?${targetUrl}`,
+    { headers: { "Authorization": CSFLOAT_API_KEY } }
+  );
+  if (!response.ok) throw new Error(`CSFloat error: ${response.status}`);
   const data = await response.json();
   return data.data.map(listing => ({
     id: listing.id,
@@ -62,11 +56,9 @@ async function fetchCSFloatItems() {
   }));
 }
 
-// Найти целевые предметы по диапазону цен
 export function findTargetItems(sourcePrice, chancePercent, allItems) {
   let minPrice, maxPrice;
-
-  if (chancePercent === 50) { // 2x
+  if (chancePercent === 50) {
     minPrice = sourcePrice * 1.8;
     maxPrice = sourcePrice * 2.2;
   } else if (chancePercent === 30) {
@@ -82,19 +74,16 @@ export function findTargetItems(sourcePrice, chancePercent, allItems) {
     minPrice = sourcePrice / 0.03 * 0.9;
     maxPrice = sourcePrice / 0.03 * 1.1;
   } else {
-    // Кастомный шанс
     minPrice = sourcePrice / (chancePercent / 100) * 0.85;
     maxPrice = sourcePrice / (chancePercent / 100) * 1.15;
   }
-
   return allItems.filter(item => item.price >= minPrice && item.price <= maxPrice);
 }
 
-// Рассчитать шанс по двум предметам
 export function calculateChance(sourcePrice, targetPrice) {
   if (!targetPrice || targetPrice <= 0) return 0;
   const chance = (sourcePrice / targetPrice) * 100;
-  return Math.min(95, Math.max(0.1, chance)); // ограничиваем
+  return Math.min(95, Math.max(0.1, chance));
 }
 
 export function getRarityColor(rarity) {
