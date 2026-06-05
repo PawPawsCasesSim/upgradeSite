@@ -20,5 +20,5 @@ export const db = getDatabase(app);
 
 // UID администраторов — добавьте сюда UID после регистрации
 export const ADMIN_UIDS = [
-  "ADMIN_UID_1",  // Замените на реальный UID
+  "oVpplqRKhVbrLDGq6Va71F1JVug1",  // Замените на реальный UID
 ];
