@@ -1,32 +1,34 @@
 export const FALLBACK_SKINS = [
-  { id:'ak-cartel', weapon:'AK-47', name:'Cartel', wear:'FN', price:779.49, rarity:'blue', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/3107779471/256fx192f' },
-  { id:'m4-arctic-wolf', weapon:'M4A1-S', name:'Arctic Wolf', wear:'MW', price:779.49, rarity:'purple', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/4441843881/256fx192f' },
-  { id:'tec-snek9', weapon:'Tec-9', name:'Snek-9', wear:'FN', price:780.59, rarity:'blue', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/3107785464/256fx192f' },
-  { id:'ssg-entombed', weapon:'SSG 08', name:'Entombed', wear:'FN', price:780.85, rarity:'purple', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/3604671027/256fx192f' },
-  { id:'aug-antique', weapon:'AUG', name:'Antique', wear:'MW', price:780.85, rarity:'purple', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/3107778762/256fx192f' },
-  { id:'p90-shallow', weapon:'P90', name:'Shallow Grave', wear:'FT', price:781.70, rarity:'pink', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/1989279821/256fx192f' },
-  { id:'sticker-faze', weapon:'Sticker', name:'FaZe Clan Holo', wear:'', price:782.44, rarity:'gold', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/1761858741/256fx192f' },
-  { id:'awp-rapid', weapon:'AWP', name:'Rapid Transit', wear:'MW', price:782.44, rarity:'purple', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/3107767958/256fx192f' },
-  { id:'ak-traveler', weapon:'AK-47', name:'Traveler', wear:'MW', price:783.51, rarity:'blue', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/3107779361/256fx192f' },
-  { id:'mac-leaded', weapon:'MAC-10', name:'Leaded Glass', wear:'MW', price:783.91, rarity:'purple', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/1989275338/256fx192f' },
+  { id:'ak-cartel', weapon:'AK-47', name:'Cartel', wear:'FN', price:779, rarity:'blue', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/3107779471/256fx192f' },
+  { id:'m4-arctic-wolf', weapon:'M4A1-S', name:'Arctic Wolf', wear:'MW', price:779, rarity:'purple', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/4441843881/256fx192f' },
   { id:'ak-redline', weapon:'AK-47', name:'Redline', wear:'FT', price:4500, rarity:'purple', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/3107779063/256fx192f' },
-  { id:'usp-orion', weapon:'USP-S', name:'Orion', wear:'FN', price:9500, rarity:'pink', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/3107780080/256fx192f' },
-  { id:'m4-cyrex', weapon:'M4A1-S', name:'Cyrex', wear:'FN', price:12500, rarity:'red', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/3107778790/256fx192f' },
   { id:'awp-asiimov', weapon:'AWP', name:'Asiimov', wear:'FT', price:18000, rarity:'red', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/3107767939/256fx192f' },
   { id:'ak-bloodsport', weapon:'AK-47', name:'Bloodsport', wear:'FN', price:35000, rarity:'red', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/1761857174/256fx192f' },
-  { id:'deagle-blaze', weapon:'Desert Eagle', name:'Blaze', wear:'FN', price:62000, rarity:'red', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/3107778806/256fx192f' },
-  { id:'m4-howl', weapon:'M4A4', name:'Howl', wear:'FN', price:1759834.75, rarity:'gold', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/3107779380/256fx192f' },
-  { id:'ak-wild-lotus', weapon:'AK-47', name:'Wild Lotus', wear:'FN', price:1390140.30, rarity:'red', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/3604676772/256fx192f' },
-  { id:'awp-gungnir', weapon:'AWP', name:'Gungnir', wear:'FN', price:1069877.58, rarity:'red', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/3604680283/256fx192f' },
-  { id:'awp-dragon-lore', weapon:'AWP', name:'Dragon Lore', wear:'FN', price:974910.49, rarity:'red', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/3107779799/256fx192f' },
-  { id:'bayonet-doppler-ruby', weapon:'Bayonet', name:'Doppler Ruby', wear:'FN', price:881173.52, rarity:'gold', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/3107783084/256fx192f' },
-  { id:'m9-doppler-ruby', weapon:'M9 Bayonet', name:'Doppler Ruby', wear:'FN', price:856008.26, rarity:'gold', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/3107782851/256fx192f' },
-  { id:'sport-superconductor', weapon:'Sport Gloves', name:'Superconductor', wear:'FN', price:828856.56, rarity:'gold', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/1989291395/256fx192f' },
-  { id:'karambit-gamma', weapon:'Karambit', name:'Gamma Doppler', wear:'FN', price:804071.27, rarity:'gold', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/1989279108/256fx192f' },
-  { id:'awp-medusa', weapon:'AWP', name:'Medusa', wear:'FN', price:514830.52, rarity:'red', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/3107779611/256fx192f' },
-  { id:'ak-fire-serpent', weapon:'AK-47', name:'Fire Serpent', wear:'MW', price:724354.21, rarity:'red', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/3107778856/256fx192f' },
-  { id:'m4-poseidon', weapon:'M4A4', name:'Poseidon', wear:'FN', price:280000, rarity:'red', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/3107779934/256fx192f' }
+  { id:'m4-howl', weapon:'M4A4', name:'Howl', wear:'FN', price:1759835, rarity:'red', image:'https://community.cloudflare.steamstatic.com/economy/image/class/730/3107779380/256fx192f' }
 ];
+
+const MAX_CARDS_ON_SCREEN = 520;
+export { MAX_CARDS_ON_SCREEN };
+
+export async function loadCatalogFromCsapi() {
+  const sources = [
+    'data/cs2-skins.json',
+    'https://raw.githubusercontent.com/qwkdev/csapi/main/data2.json',
+    'https://cdn.jsdelivr.net/gh/qwkdev/csapi@main/data2.json'
+  ];
+
+  for (const url of sources) {
+    try {
+      const res = await fetch(url, { cache: 'force-cache' });
+      if (!res.ok) continue;
+      const json = await res.json();
+      const values = Array.isArray(json) ? json : Object.values(json || {});
+      const loaded = values.map((x, i) => normalizeSkin(x, i)).filter(i => i.image && i.weapon && i.name && i.price);
+      if (loaded.length) return mergeCatalog(FALLBACK_SKINS, loaded);
+    } catch (e) {}
+  }
+  return FALLBACK_SKINS;
+}
 
 const WEAR_MAP = {
   'Factory New': 'FN',
@@ -36,14 +38,30 @@ const WEAR_MAP = {
   'Battle-Scarred': 'BS'
 };
 
-const RARITY_PRICE = {
-  common: 120,
-  blue: 350,
-  purple: 1200,
-  pink: 3500,
-  red: 10000,
-  gold: 25000
+const RARITY_MAP = {
+  'Consumer Grade': 'common',
+  'Industrial Grade': 'common',
+  'Base Grade': 'common',
+  'Mil-Spec Grade': 'blue',
+  'High Grade': 'blue',
+  'Restricted': 'purple',
+  'Remarkable': 'purple',
+  'Classified': 'pink',
+  'Exotic': 'pink',
+  'Covert': 'red',
+  'Contraband': 'red',
+  'Extraordinary': 'gold',
+  'Master': 'gold'
 };
+
+const BASE_PRICE = { common: 70, blue: 220, purple: 850, pink: 2600, red: 8500, gold: 25000 };
+const WEAR_MUL = { FN: 1.65, MW: 1.25, FT: 1, WW: .82, BS: .68 };
+const SPECIAL_PRICE = [
+  ['dragon lore', 900000], ['gungnir', 1000000], ['howl', 1500000], ['wild lotus', 1200000],
+  ['fire serpent', 420000], ['medusa', 480000], ['poseidon', 250000], ['doppler ruby', 800000],
+  ['doppler sapphire', 750000], ['emerald', 700000], ['fade', 250000], ['lore', 180000],
+  ['printstream', 42000], ['asiimov', 18000], ['bloodsport', 35000], ['vulcan', 65000], ['hydroponic', 250000]
+];
 
 function hashCode(text){
   let h = 0;
@@ -51,64 +69,47 @@ function hashCode(text){
   return Math.abs(h);
 }
 
-function rarityFromName(name){
-  const n = name.toLowerCase();
-  if(/knife|bayonet|karambit|gloves|wraps|specialist|sport gloves|driver gloves|moto gloves|hydra gloves/.test(n)) return 'gold';
-  if(/dragon lore|gungnir|howl|wild lotus|fire serpent|medusa|poseidon|asiimov|bloodsport|printstream/.test(n)) return 'red';
-  if(/neo-noir|cyrex|hyper beast|emperor|vogue|desolate space|akihabara/.test(n)) return 'pink';
-  if(/redline|mecha|cortex|guardian|fuel injector|chantico|decimator/.test(n)) return 'purple';
+function rarityFromRaw(raw, name){
+  const r = String(raw.rarity || '');
+  for (const [key, value] of Object.entries(RARITY_MAP)) if (r.toLowerCase().includes(key.toLowerCase())) return value;
+  const n = String(name || '').toLowerCase();
+  if(/knife|bayonet|karambit|gloves|wraps/.test(n)) return 'gold';
   return 'blue';
 }
 
-function syntheticPrice(item){
-  const rarity = item.rarity || rarityFromName(`${item.weapon} ${item.name}`);
-  const base = RARITY_PRICE[rarity] || 500;
-  const spread = hashCode(`${item.id}-${item.wear}`) % Math.max(1, base * 4);
-  const wearMul = item.wear === 'FN' ? 1.7 : item.wear === 'MW' ? 1.25 : item.wear === 'FT' ? 1 : item.wear === 'WW' ? .82 : .7;
-  return Math.round((base + spread) * wearMul);
+function syntheticPrice(item, raw = {}){
+  const text = `${item.weapon} ${item.name}`.toLowerCase();
+  for (const [key, price] of SPECIAL_PRICE) {
+    if (text.includes(key)) return Math.round(price * (0.85 + (hashCode(item.id) % 31) / 100) * (WEAR_MUL[item.wear] || 1));
+  }
+  const rarity = item.rarity || 'blue';
+  const base = BASE_PRICE[rarity] || 300;
+  const spread = hashCode(`${item.id}-${item.wear}`) % Math.max(1, base * 6);
+  const typeMul = raw.type === 'StatTrak' ? 1.45 : raw.type === 'Souvenir' ? 1.25 : 1;
+  return Math.max(10, Math.round((base + spread) * (WEAR_MUL[item.wear] || 1) * typeMul));
 }
 
 export function normalizeSkin(raw, index = 0) {
-  const fullName = raw['full-name'] || raw.market_hash_name || raw.name || `${raw.weapon || 'Skin'} ${raw.skin || ''}`.trim();
+  // Уже нормализованный локальный каталог.
+  if (raw.id && raw.weapon && raw.name && raw.price && raw.image) return raw;
+
+  const fullName = raw['full-name'] || raw.market_hash_name || raw.name || `${raw.weapon || 'Skin'} ${raw.finish || ''}`.trim();
   const split = String(raw.name || fullName).split('|');
-  const weapon = raw.weapon || raw.item_name || split[0]?.trim() || 'Skin';
-  const skinName = raw.skin || raw.paint_name || split[1]?.replace(/\(.+\)/,'').trim() || String(raw.name || fullName).replace(`${weapon} |`, '').trim();
+  const weapon = raw.weapon || split[0]?.trim() || 'Skin';
+  let skinName = raw.finish || raw.skin || split[1]?.replace(/\(.+\)/,'').trim() || String(raw.name || fullName).replace(`${weapon} |`, '').trim();
+  if (raw.type && raw.type !== 'Normal' && !skinName.includes(raw.type)) skinName += ` ${raw.type}`;
   const exterior = raw.exterior || raw.wear || (String(fullName).match(/\((Factory New|Minimal Wear|Field-Tested|Well-Worn|Battle-Scarred)\)/)?.[1]) || 'Factory New';
   const item = {
-    id: raw.id || raw.asset_id || `${fullName}-${index}`.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+    id: raw.id || `${raw.type || 'Normal'}-${fullName}-${index}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
     weapon,
     name: skinName,
     wear: WEAR_MAP[exterior] || exterior,
-    rarity: raw.rarity || rarityFromName(fullName),
+    rarity: rarityFromRaw(raw, fullName),
     image: raw.image || raw.icon_url || raw.icon || '',
     price: Number(raw.price || raw.priceUsd || raw.min_price || raw.reference?.base_price || 0)
   };
-  if (!item.price) item.price = syntheticPrice(item);
+  if (!item.price) item.price = syntheticPrice(item, raw);
   return item;
-}
-
-export async function loadCatalogFromCsapi(limit = 180) {
-  const urls = [
-    'https://raw.githubusercontent.com/qwkdev/csapi/main/data2.json',
-    'https://cdn.jsdelivr.net/gh/qwkdev/csapi@main/data2.json',
-    'https://raw.githubusercontent.com/qwkdev/csapi/main/data.json',
-    'https://cdn.jsdelivr.net/gh/qwkdev/csapi@main/data.json'
-  ];
-
-  for (const url of urls) {
-    try {
-      const res = await fetch(url, { cache: 'force-cache' });
-      if (!res.ok) continue;
-      const json = await res.json();
-      const values = Array.isArray(json) ? json : Object.values(json || {});
-      const loaded = values
-        .map(normalizeSkin)
-        .filter(i => i.image && i.weapon && i.name)
-        .slice(0, limit);
-      if (loaded.length) return mergeCatalog(FALLBACK_SKINS, loaded);
-    } catch (e) {}
-  }
-  return FALLBACK_SKINS;
 }
 
 function mergeCatalog(base, extra){

@@ -1,4 +1,4 @@
-import { ref, set, get, update, push, onValue, query, orderByChild, limitToLast, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js';
+import { ref, set, get, push, onValue, query, orderByChild, limitToLast, runTransaction, onDisconnect, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js';
 import { db } from './firebase.js';
 
 export function userRef(uid){ return ref(db, `users/${uid}`); }
@@ -26,6 +26,17 @@ export function listenLiveDrops(cb) {
   });
 }
 export function listenUpgradeCount(cb){ return onValue(ref(db,'meta/upgradeCount'), s => cb(s.val() || 0)); }
+export function listenOnlineCount(cb){ return onValue(ref(db,'presence'), s => cb(s.exists() ? s.size : 0)); }
+export function setPresence(uid){
+  const connectedRef = ref(db, '.info/connected');
+  const userPresence = ref(db, `presence/${uid}`);
+  return onValue(connectedRef, snap => {
+    if (snap.val() === true) {
+      onDisconnect(userPresence).remove();
+      set(userPresence, { online: true, lastSeen: serverTimestamp() });
+    }
+  });
+}
 export async function addInventoryItem(uid, item) {
   const newRef = push(inventoryRef(uid));
   await set(newRef, { ...item, instanceId: newRef.key, boughtAt: Date.now() });

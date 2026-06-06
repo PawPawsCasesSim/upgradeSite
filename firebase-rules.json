@@ -17,14 +17,20 @@
     },
     "upgrades": {
       ".read": "auth !== null",
-      ".indexOn": ["uid", "createdAt"],
+      ".indexOn": [
+        "uid",
+        "createdAt"
+      ],
       "$upgradeId": {
         ".write": "auth !== null && (!data.exists() || newData.child('uid').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin')"
       }
     },
     "liveDrops": {
       ".read": "auth !== null",
-      ".indexOn": ["createdAt", "uid"],
+      ".indexOn": [
+        "createdAt",
+        "uid"
+      ],
       "$dropId": {
         ".write": "auth !== null"
       }
@@ -36,6 +42,12 @@
     "admin_logs": {
       ".read": "root.child('users').child(auth.uid).child('role').val() === 'admin'",
       ".write": "root.child('users').child(auth.uid).child('role').val() === 'admin'"
+    },
+    "presence": {
+      ".read": "auth !== null",
+      "$uid": {
+        ".write": "auth !== null && $uid === auth.uid"
+      }
     }
   }
 }

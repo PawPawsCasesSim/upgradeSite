@@ -1,4 +1,4 @@
-import { FALLBACK_SKINS } from './items.js';
+import { FALLBACK_SKINS, MAX_CARDS_ON_SCREEN } from './items.js';
 import { $, card, selectedMarkup, itemTitle, fmt, toast } from './ui.js';
 import { addInventoryItem, removeInventoryItem, addBalance, incStats, recordUpgrade } from './db.js';
 
@@ -10,7 +10,7 @@ export const state = {
   selectedShop: null,
   selectedSource: null,
   selectedTarget: null,
-  preset: null,
+  desiredChance: null,
   spinning: false,
   arrowRotation: 0
 };
@@ -23,9 +23,19 @@ export function inventoryArray(){
 
 export function chance(){
   if(!state.selectedSource || !state.selectedTarget) return 0;
-  let c = (Number(state.selectedSource.price) / Number(state.selectedTarget.price)) * 100;
-  if (state.preset) c = Math.min(Number(state.preset), c);
+  const source = Number(state.selectedSource.price || 0);
+  const target = Number(state.selectedTarget.price || 0);
+  if (!source || !target || target <= source) return 0;
+  const c = (source / target) * 100;
   return Math.max(0.01, Math.min(75, c));
+}
+
+function visibleSlice(list){
+  const sliced = list.slice(0, MAX_CARDS_ON_SCREEN);
+  const more = list.length > MAX_CARDS_ON_SCREEN
+    ? `<div class="list-note">Показано ${MAX_CARDS_ON_SCREEN} из ${list.length}. Используй поиск или фильтр цены.</div>`
+    : '';
+  return { sliced, more };
 }
 
 function filterList(list, searchSel, minSel, maxSel){
@@ -36,6 +46,39 @@ function filterList(list, searchSel, minSel, maxSel){
     const title = itemTitle(i).toLowerCase();
     return (!q || title.includes(q)) && (!min || i.price >= min) && (!max || i.price <= max);
   });
+}
+
+function targetsForSelectedSource(){
+  if (!state.selectedSource) return [];
+  const minPriceForMaxChance = Number(state.selectedSource.price) / 0.75;
+  return state.catalog.filter(i => Number(i.price) >= minPriceForMaxChance);
+}
+
+export function desiredChanceFromPreset(value){
+  const v = String(value || '');
+  if (v === '2') return 50;
+  if (v === '4') return 25;
+  if (v === '8') return 12.5;
+  return Math.max(0.01, Math.min(75, Number(v || 0)));
+}
+
+export function autoSelectTargetByChance(targetChance){
+  if (!state.selectedSource || !targetChance) return false;
+  const sourcePrice = Number(state.selectedSource.price);
+  const wantedPrice = sourcePrice * 100 / Number(targetChance);
+  const candidates = targetsForSelectedSource();
+  if (!candidates.length) return false;
+  let best = candidates[0];
+  let bestScore = Infinity;
+  for (const item of candidates) {
+    const itemChance = Math.min(75, (sourcePrice / Number(item.price)) * 100);
+    const priceDiff = Math.abs(Number(item.price) - wantedPrice) / Math.max(1, wantedPrice);
+    const chanceDiff = Math.abs(itemChance - targetChance) / Math.max(1, targetChance);
+    const score = chanceDiff * 5 + priceDiff;
+    if (score < bestScore) { bestScore = score; best = item; }
+  }
+  state.selectedTarget = best;
+  return true;
 }
 
 export function renderAll(){ renderTop(); renderSelected(); renderShop(); renderTargets(); renderChance(); }
@@ -60,25 +103,29 @@ export function renderSelected(){
 export function renderShop(){
   const list = state.activeList === 'shop' ? state.catalog : inventoryArray();
   const filtered = filterList(list, '#shopSearch', '#shopMin', '#shopMax');
-  $('#shopGrid').innerHTML = filtered.map(i => card(i, state.activeList, (state.activeList==='shop' ? state.selectedShop?.id===i.id : state.selectedSource?.instanceId===i.instanceId))).join('') || '<div class="muted">Ничего не найдено</div>';
+  const { sliced, more } = visibleSlice(filtered);
+  $('#shopGrid').innerHTML = sliced.map(i => card(i, state.activeList, (state.activeList==='shop' ? state.selectedShop?.id===i.id : state.selectedSource?.instanceId===i.instanceId))).join('') + more || '<div class="muted">Ничего не найдено</div>';
   $('#buySelectedBtn').classList.toggle('hidden', state.activeList !== 'shop' || !state.selectedShop);
 }
 
 export function renderTargets(){
-  let list = state.catalog;
-  if (state.selectedSource) list = list.filter(i => Number(i.price) > Number(state.selectedSource.price));
-  else list = [];
+  let list = targetsForSelectedSource();
   list = filterList(list, '#targetSearch', '#targetMin', '#targetMax');
-  $('#targetGrid').innerHTML = list.map(i => card(i, 'target', state.selectedTarget?.id===i.id)).join('') || `<div class="muted" style="padding:12px">Сначала выбери свой скин. Здесь будут только предметы дороже выбранного.</div>`;
+  const { sliced, more } = visibleSlice(list);
+  $('#targetGrid').innerHTML = state.selectedSource
+    ? (sliced.map(i => card(i, 'target', state.selectedTarget?.id===i.id)).join('') + more || `<div class="muted" style="padding:12px">Нет предметов под фильтры.</div>`)
+    : `<div class="muted" style="padding:12px">Сначала выбери свой скин. Здесь будут только предметы дороже выбранного и с шансом не выше 75%.</div>`;
 }
 
 export function renderChance(){
   const c = chance();
-  const angle = Math.max(1, Math.min(270, c / 100 * 360));
-  const wheel = $('#wheel');
-  wheel.style.setProperty('--success-angle', `${angle}deg`);
+  const angle = Math.max(0, Math.min(270, c / 100 * 360));
+  $('#wheel').style.setProperty('--success-angle', `${angle}deg`);
   $('#chanceText').textContent = `${c.toFixed(2)}%`;
   $('#chanceLabel').textContent = state.selectedSource && state.selectedTarget ? 'шанс успеха' : 'выберите скин';
+  document.querySelectorAll('.chance-presets button').forEach(btn => {
+    btn.classList.toggle('active', Number(desiredChanceFromPreset(btn.dataset.preset)) === Number(state.desiredChance || -1));
+  });
 }
 
 export async function buySelected(){
@@ -125,12 +172,13 @@ export async function doUpgrade(){
   const roll = Math.random() * 100;
   const success = roll <= c;
 
-  // Колесо НЕ крутится. Крутится только стрелка вокруг центра.
-  const targetAngle = success
-    ? randomBetween(4, Math.max(5, successAngle - 4))
+  const current = state.arrowRotation % 360;
+  const finalAngle = success
+    ? randomBetween(3, Math.max(4, successAngle - 3))
     : randomBetween(Math.min(359, successAngle + 8), 359);
-  state.arrowRotation += 1440 + targetAngle;
-  $('#wheelArrow').style.transform = `translateX(-50%) rotate(${state.arrowRotation}deg)`;
+  const delta = ((finalAngle - current + 360) % 360);
+  state.arrowRotation += 1440 + delta;
+  $('#wheelArrow').style.transform = `rotate(${state.arrowRotation}deg)`;
   $('#upgradeBtn').disabled = true;
 
   await new Promise(r => setTimeout(r, 1900));
@@ -154,7 +202,7 @@ export async function doUpgrade(){
   }, success);
   state.selectedSource = null;
   state.selectedTarget = null;
-  state.preset = null;
+  state.desiredChance = null;
   $('#upgradeBtn').disabled = false;
   state.spinning = false;
   renderAll();

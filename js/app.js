@@ -1,7 +1,7 @@
 import { $, $$, toast, liveDropMarkup, card, fmt } from './ui.js';
 import { registerUser, loginUser, logoutUser, authChanged, getAuthError } from './auth.js';
-import { getUserProfile, listenUserProfile, listenLiveDrops, listenUpgradeCount } from './db.js';
-import { state, renderAll, renderShop, renderTargets, renderChance, buySelected, doUpgrade, inventoryArray, sellInventoryItem, sellAllInventoryItems } from './upgrade.js';
+import { getUserProfile, listenUserProfile, listenLiveDrops, listenUpgradeCount, listenOnlineCount, setPresence } from './db.js';
+import { state, renderAll, renderShop, renderTargets, renderChance, buySelected, doUpgrade, inventoryArray, sellInventoryItem, sellAllInventoryItems, desiredChanceFromPreset, autoSelectTargetByChance } from './upgrade.js';
 import { initAdmin, fillAdminItems } from './admin.js';
 import { loadCatalogFromCsapi } from './items.js';
 
@@ -36,7 +36,8 @@ function bindStatic(){
     if(btn.dataset.mode === 'shop') state.selectedShop = state.catalog.find(i => i.id === btn.dataset.id);
     if(btn.dataset.mode === 'inventory') {
       state.selectedSource = inventoryArray().find(i => i.instanceId === btn.dataset.id);
-      if(state.selectedTarget && state.selectedTarget.price <= state.selectedSource.price) state.selectedTarget = null;
+      if (state.desiredChance) autoSelectTargetByChance(state.desiredChance);
+      else if(state.selectedTarget && state.selectedTarget.price <= state.selectedSource.price) state.selectedTarget = null;
     }
     renderAll();
   });
@@ -47,8 +48,17 @@ function bindStatic(){
   });
   $('.chance-presets').addEventListener('click', e => {
     const btn = e.target.closest('button'); if(!btn) return;
-    state.preset = btn.dataset.preset;
-    renderChance();
+    const wanted = desiredChanceFromPreset(btn.dataset.preset);
+    state.desiredChance = wanted;
+    btn.dataset.chance = String(wanted);
+    if (!state.selectedSource) {
+      toast('Сначала выбери свой скин, потом сайт сам подберёт цель под этот шанс.');
+      renderChance();
+      return;
+    }
+    const ok = autoSelectTargetByChance(wanted);
+    toast(ok ? `Подобрал цель примерно под ${wanted}%` : 'Не нашёл подходящий скин под этот шанс.');
+    renderAll();
   });
   $('#liveDrops').addEventListener('click', e => {
     const btn = e.target.closest('.live-card'); if(btn?.dataset.uid) openProfile(btn.dataset.uid);
@@ -94,10 +104,12 @@ async function openProfile(uid){
 function startListeners(){
   listenLiveDrops(drops => { $('#liveDrops').innerHTML = drops.map(liveDropMarkup).join('') || '<p class="muted" style="font-size:11px;padding:8px">Пока нет успешных апгрейдов</p>'; });
   listenUpgradeCount(n => $('#upgradeCount').textContent = fmt(n));
+  listenOnlineCount(n => $('#onlineCount').textContent = fmt(n));
 }
 
+
 async function bootCatalog(){
-  state.catalog = await loadCatalogFromCsapi(220);
+  state.catalog = await loadCatalogFromCsapi();
   fillAdminItems?.();
   renderAll();
 }
@@ -113,6 +125,7 @@ authChanged(user => {
   $('#app').classList.toggle('hidden', !user);
   if(unsubProfile) unsubProfile();
   if(!user) return;
+  setPresence(user.uid);
   unsubProfile = listenUserProfile(user.uid, profile => {
     state.profile = profile;
     renderAll();
