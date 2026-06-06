@@ -252,3 +252,13 @@ body{background:radial-gradient(circle at 50% 0%,rgba(0,170,255,.18),transparent
 .selected-stack img{width:42px!important;height:32px!important;object-fit:contain!important;margin:0!important;filter:drop-shadow(0 8px 12px rgba(0,0,0,.35))}
 .selected-item small{display:block;color:#82abc8;margin-top:4px;font-size:11px;font-weight:800}
 .skin-card.active:after{content:'✓';position:absolute;right:8px;bottom:8px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#28dcff;color:#03111e;font-weight:1000;box-shadow:0 0 14px rgba(40,220,255,.45)}
+
+
+/* v12: shop cart buys only different items; slower needle spin. */
+.cart-btn{min-width:190px;white-space:nowrap;font-size:13px;padding:0 12px!important}
+.wheel-arrow{
+  transition-property:transform!important;
+  transition-duration:var(--spin-duration, 14000ms)!important;
+  transition-timing-function:cubic-bezier(.04,.76,.04,1)!important;
+}
+.skin-card.active:after{content:'✓';position:absolute;right:8px;bottom:8px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#28dcff;color:#03111e;font-weight:1000;box-shadow:0 0 14px rgba(40,220,255,.45)}

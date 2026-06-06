@@ -1,7 +1,7 @@
 import { $, $$, toast, liveDropMarkup, card, fmt } from './ui.js';
 import { registerUser, loginUser, logoutUser, authChanged, getAuthError } from './auth.js';
 import { getUserProfile, listenUserProfile, listenLiveDrops, listenUpgradeCount, listenOnlineCount, setPresence } from './db.js';
-import { state, renderAll, renderShop, renderTargets, renderChance, buySelected, doUpgrade, inventoryArray, sellInventoryItem, sellAllInventoryItems, desiredChanceFromPreset, autoSelectTargetByChance, toggleSourceItem, selectedSources } from './upgrade.js';
+import { state, renderAll, renderShop, renderTargets, renderChance, buySelected, doUpgrade, inventoryArray, sellInventoryItem, sellAllInventoryItems, desiredChanceFromPreset, autoSelectTargetByChance, toggleSourceItem, selectedSources, toggleShopCartItem, clearShopCart } from './upgrade.js';
 import { initAdmin, fillAdminItems } from './admin.js';
 import { loadCatalogFromCsapi } from './items.js';
 
@@ -38,14 +38,17 @@ function bindStatic(){
     $$('.tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     state.activeList = btn.dataset.list;
-    state.selectedShop = null;
+    clearShopCart();
     renderShop();
   }));
   ['#shopSearch','#shopMin','#shopMax'].forEach(s => $(s).addEventListener('input', renderShop));
   ['#targetSearch','#targetMin','#targetMax'].forEach(s => $(s).addEventListener('input', renderTargets));
   $('#shopGrid').addEventListener('click', e => {
     const btn = e.target.closest('.skin-card'); if(!btn) return;
-    if(btn.dataset.mode === 'shop') state.selectedShop = state.catalog.find(i => i.id === btn.dataset.id);
+    if(btn.dataset.mode === 'shop') {
+      const item = state.catalog.find(i => i.id === btn.dataset.id);
+      toggleShopCartItem(item);
+    }
     if(btn.dataset.mode === 'inventory') {
       const item = inventoryArray().find(i => i.instanceId === btn.dataset.id);
       const changed = toggleSourceItem(item);

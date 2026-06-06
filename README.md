@@ -25,9 +25,10 @@ firebase deploy --only hosting,database
 Перед деплоем проверь `js/firebase-config.js` и вставь свой Firebase config.
 Правила базы находятся в `firebase-rules.json`.
 
-## v11 changes
 
-- Arrow spin slowed down to 8-11 seconds.
-- Shop supports buying multiple copies of the selected skin at once using the quantity input near the Buy button.
-- Upgrade supports selecting up to 5 inventory items at once. Their prices are summed and used as the total upgrade stake.
-- Target skins are filtered by the total selected stake, so the target must still be more expensive and the chance stays capped at 75%.
+## v12
+- Убрана покупка одного предмета большим количеством.
+- В магазине можно выбрать много разных предметов и купить их одной кнопкой.
+- Один и тот же скин не добавляется в корзину повторно.
+- Инвентарь скрывает битые старые записи с ценой 0.
+- Прокрут стрелки замедлен до 12–16 секунд, CSS теперь берёт длительность из JS.

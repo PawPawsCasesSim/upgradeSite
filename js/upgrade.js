@@ -8,6 +8,7 @@ export const state = {
   catalog: FALLBACK_SKINS,
   activeList: 'shop',
   selectedShop: null,
+  shopCart: [],
   selectedSource: null,
   selectedSources: [],
   selectedTarget: null,
@@ -18,8 +19,10 @@ export const state = {
 
 export function inventoryArray(){
   const inv = state.profile?.inventory || {};
-  if (Array.isArray(inv)) return inv.map((x,i)=>({ ...x, instanceId: x.instanceId || String(i) }));
-  return Object.entries(inv).map(([k,v]) => ({ ...v, instanceId: k }));
+  const normalize = (x, i) => ({ ...x, instanceId: x.instanceId || String(i) });
+  const valid = item => item && (item.id || item.weapon || item.name) && Number(item.price || 0) > 0;
+  if (Array.isArray(inv)) return inv.map(normalize).filter(valid);
+  return Object.entries(inv).map(([k,v]) => ({ ...v, instanceId: k })).filter(valid);
 }
 
 export function selectedSources(){
@@ -28,6 +31,29 @@ export function selectedSources(){
 
 export function selectedSourceValue(){
   return selectedSources().reduce((sum, item) => sum + Number(item.price || 0), 0);
+}
+
+export function shopCartItems(){
+  const ids = Array.isArray(state.shopCart) ? state.shopCart : [];
+  return ids.map(id => state.catalog.find(i => i.id === id)).filter(Boolean);
+}
+
+export function toggleShopCartItem(item){
+  if(!item) return false;
+  const ids = Array.isArray(state.shopCart) ? state.shopCart : [];
+  if(ids.includes(item.id)){
+    state.shopCart = ids.filter(id => id !== item.id);
+  } else {
+    if(ids.length >= 50){ toast('Можно выбрать максимум 50 разных предметов за одну покупку.'); return false; }
+    state.shopCart = [...ids, item.id];
+  }
+  state.selectedShop = null;
+  return true;
+}
+
+export function clearShopCart(){
+  state.shopCart = [];
+  state.selectedShop = null;
 }
 
 export function syncSelectedSource(){
@@ -160,8 +186,13 @@ export function renderShop(){
   const list = state.activeList === 'shop' ? state.catalog : inventoryArray();
   const filtered = filterList(list, '#shopSearch', '#shopMin', '#shopMax');
   const { sliced, more } = visibleSlice(filtered);
-  $('#shopGrid').innerHTML = sliced.map(i => card(i, state.activeList, (state.activeList==='shop' ? state.selectedShop?.id===i.id : selectedSources().some(x => x.instanceId===i.instanceId)))).join('') + more || '<div class="muted">Ничего не найдено</div>';
-  $('#buyControls').classList.toggle('hidden', state.activeList !== 'shop' || !state.selectedShop);
+  const cartIds = Array.isArray(state.shopCart) ? state.shopCart : [];
+  $('#shopGrid').innerHTML = sliced.map(i => card(i, state.activeList, (state.activeList==='shop' ? cartIds.includes(i.id) : selectedSources().some(x => x.instanceId===i.instanceId)))).join('') + more || '<div class="muted">Ничего не найдено</div>';
+  const cartItems = shopCartItems();
+  const cartTotal = cartItems.reduce((sum, item) => sum + Number(item.price || 0), 0);
+  const buyBtn = $('#buySelectedBtn');
+  buyBtn.classList.toggle('hidden', state.activeList !== 'shop' || cartItems.length === 0);
+  buyBtn.textContent = cartItems.length ? `Купить выбранные: ${cartItems.length} • ◎ ${fmt(cartTotal)}` : 'Купить';
 }
 
 export function renderTargets(){
@@ -189,16 +220,22 @@ export function renderChance(){
 }
 
 export async function buySelected(){
-  if(!state.selectedShop) return toast('Выбери скин в магазине.');
-  const qtyInput = $('#buyQty');
-  const qty = Math.max(1, Math.min(99, Math.floor(Number(qtyInput?.value || 1))));
-  const price = Number(state.selectedShop.price);
-  const total = price * qty;
+  const items = shopCartItems();
+  if(!items.length) return toast('Выбери один или несколько разных скинов в магазине.');
+  const unique = [];
+  const seen = new Set();
+  for(const item of items){
+    if(seen.has(item.id)) continue;
+    seen.add(item.id);
+    unique.push(item);
+  }
+  const total = unique.reduce((sum, item) => sum + Number(item.price || 0), 0);
   if(Number(state.profile?.balance || 0) < total) return toast(`Недостаточно баланса. Нужно ◎ ${fmt(total)}.`);
   await addBalance(state.user.uid, -total);
-  for(let i = 0; i < qty; i++) await addInventoryItem(state.user.uid, state.selectedShop);
-  toast(`Куплено: ${qty} шт. за ◎ ${fmt(total)}.`);
-  state.selectedShop = null;
+  for(const item of unique) await addInventoryItem(state.user.uid, item);
+  toast(`Куплено разных предметов: ${unique.length}. Списано ◎ ${fmt(total)}.`);
+  clearShopCart();
+  renderAll();
 }
 
 export async function sellInventoryItem(instanceId){
@@ -255,11 +292,12 @@ export async function doUpgrade(){
   const relativeCheck = normDeg(finalAngle - sectorStart);
   const roll = relativeCheck / 360 * 100;
 
-  const duration = Math.floor(8000 + Math.random() * 3000);
+  const duration = Math.floor(12000 + Math.random() * 4000);
   const current = normDeg(state.arrowRotation);
   const delta = normDeg(finalAngle - current);
-  state.arrowRotation += 2160 + delta;
+  state.arrowRotation += 1080 + delta;
   const arrow = $('#wheelArrow');
+  arrow.style.setProperty('--spin-duration', `${duration}ms`);
   arrow.style.transitionDuration = `${duration}ms`;
   arrow.style.transform = `rotate(${state.arrowRotation}deg)`;
   $('#upgradeBtn').disabled = true;
