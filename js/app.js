@@ -8,12 +8,24 @@ import { loadCatalogFromCsapi } from './items.js';
 let unsubProfile = null;
 
 function bindStatic(){
+  function setAuthMode(mode){
+    const isLogin = mode === 'login';
+    $('#loginForm').classList.toggle('hidden', !isLogin);
+    $('#registerForm').classList.toggle('hidden', isLogin);
+    $('#showLoginBtn').classList.toggle('active', isLogin);
+    $('#showRegisterBtn').classList.toggle('active', !isLogin);
+    $('#authError').textContent = '';
+  }
+
+  $('#showLoginBtn').addEventListener('click', () => setAuthMode('login'));
+  $('#showRegisterBtn').addEventListener('click', () => setAuthMode('register'));
+
   $('#loginBtn').addEventListener('click', async () => {
-    try { await loginUser($('#authEmail').value.trim(), $('#authPassword').value); }
+    try { await loginUser($('#loginEmail').value.trim(), $('#loginPassword').value); }
     catch(e){ $('#authError').textContent = getAuthError(e.code); }
   });
   $('#registerBtn').addEventListener('click', async () => {
-    try { await registerUser($('#authNick').value.trim(), $('#authEmail').value.trim(), $('#authPassword').value); }
+    try { await registerUser($('#registerNick').value.trim(), $('#registerEmail').value.trim(), $('#registerPassword').value); }
     catch(e){ $('#authError').textContent = getAuthError(e.code); }
   });
   $('#logoutBtn').addEventListener('click', logoutUser);

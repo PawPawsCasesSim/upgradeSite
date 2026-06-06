@@ -173,3 +173,39 @@ body{background:radial-gradient(circle at 50% 0%,rgba(0,170,255,.18),transparent
   border-bottom:0!important;
   filter:drop-shadow(0 0 9px rgba(0,210,255,.85))!important;
 }
+
+/* v7: auth is split into separate login/register screens. */
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:18px 0 10px;background:#0d1420;border:1px solid #163a60;border-radius:14px;padding:5px}
+.auth-tab{height:38px;border-radius:10px;background:transparent;color:#8fb3d4;font-weight:900;border:0}
+.auth-tab.active{background:linear-gradient(135deg,#28dcff,#0b86ff);color:#03111e;box-shadow:0 0 18px rgba(0,170,255,.28)}
+.auth-form{display:grid;gap:10px;margin-top:12px}
+.auth-form input{margin-top:0!important}
+.auth-submit{width:100%;height:44px;margin-top:4px;background:linear-gradient(135deg,#28dcff,#0b86ff)!important;color:#03111e!important}
+
+/* v7: smaller needle, pointing into the center of the wheel. */
+.wheel-arrow{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  display:block!important;
+  color:transparent!important;
+  transform-origin:50% 50%!important;
+  transition:transform 1.85s cubic-bezier(.12,.72,.12,1)!important;
+  pointer-events:none!important;
+  z-index:4!important;
+  text-shadow:none!important;
+}
+.wheel-arrow:before{
+  content:""!important;
+  position:absolute!important;
+  left:50%!important;
+  top:22px!important;
+  transform:translateX(-50%)!important;
+  width:14px!important;
+  height:24px!important;
+  border:0!important;
+  background:#67efff!important;
+  clip-path:polygon(50% 100%,0 0,100% 0)!important;
+  filter:drop-shadow(0 0 8px rgba(0,210,255,.8))!important;
+}

@@ -15,13 +15,25 @@
     <div class="auth-card">
       <div class="brand big"><span class="chevrons">▰</span> CS2UPGRADE</div>
       <p class="muted">Войди или создай аккаунт, чтобы покупать скины и делать апгрейды.</p>
-      <input id="authNick" placeholder="Никнейм для регистрации" autocomplete="nickname" />
-      <input id="authEmail" placeholder="Email" autocomplete="email" />
-      <input id="authPassword" placeholder="Пароль" type="password" autocomplete="current-password" />
-      <div class="auth-actions">
-        <button id="loginBtn" class="btn primary">Войти</button>
-        <button id="registerBtn" class="btn ghost">Создать</button>
+
+      <div class="auth-tabs">
+        <button id="showLoginBtn" class="auth-tab active" type="button">Вход</button>
+        <button id="showRegisterBtn" class="auth-tab" type="button">Регистрация</button>
       </div>
+
+      <div id="loginForm" class="auth-form">
+        <input id="loginEmail" placeholder="Email" autocomplete="email" />
+        <input id="loginPassword" placeholder="Пароль" type="password" autocomplete="current-password" />
+        <button id="loginBtn" class="btn primary auth-submit">Войти</button>
+      </div>
+
+      <div id="registerForm" class="auth-form hidden">
+        <input id="registerNick" placeholder="Никнейм" autocomplete="nickname" />
+        <input id="registerEmail" placeholder="Email" autocomplete="email" />
+        <input id="registerPassword" placeholder="Пароль" type="password" autocomplete="new-password" />
+        <button id="registerBtn" class="btn primary auth-submit">Создать аккаунт</button>
+      </div>
+
       <div id="authError" class="auth-error"></div>
     </div>
   </div>

@@ -9,7 +9,7 @@ export async function createUserProfile(uid, { nickname, email }) {
   await set(userRef(uid), {
     nickname: nickname || email?.split('@')[0] || 'Player',
     email,
-    balance: 1000000,
+    balance: 500,
     role: 'user',
     stats: { wins: 0, losses: 0, upgrades: 0 },
     inventory: {},
