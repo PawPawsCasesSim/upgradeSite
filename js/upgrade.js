@@ -168,14 +168,19 @@ export async function doUpgrade(){
   if(Number(state.selectedTarget.price) <= Number(state.selectedSource.price)) return toast('Цель должна быть дороже твоего скина.');
   state.spinning = true;
   const c = chance();
-  const successAngle = Math.max(1, Math.min(270, c / 100 * 360));
-  const roll = Math.random() * 100;
-  const success = roll <= c;
+  const successAngle = Math.max(0.36, Math.min(270, c / 100 * 360));
 
-  const current = state.arrowRotation % 360;
-  const finalAngle = success
-    ? randomBetween(3, Math.max(4, successAngle - 3))
-    : randomBetween(Math.min(359, successAngle + 8), 359);
+  // Визуальный результат и фактический результат теперь считаются из одной точки.
+  // Если стрелка остановилась в синем секторе — победа, если в тёмном — проигрыш.
+  const successRoll = Math.random() * 100 <= c;
+  const safeGap = Math.min(2.5, Math.max(0.15, successAngle / 8));
+  const finalAngle = successRoll
+    ? randomBetween(safeGap, Math.max(safeGap + 0.05, successAngle - safeGap))
+    : randomBetween(Math.min(359, successAngle + safeGap + 2), 359);
+  const success = finalAngle <= successAngle;
+  const roll = finalAngle / 360 * 100;
+
+  const current = ((state.arrowRotation % 360) + 360) % 360;
   const delta = ((finalAngle - current + 360) % 360);
   state.arrowRotation += 1440 + delta;
   $('#wheelArrow').style.transform = `rotate(${state.arrowRotation}deg)`;
