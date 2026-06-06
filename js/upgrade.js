@@ -121,6 +121,7 @@ export function renderChance(){
   const c = chance();
   const angle = Math.max(0, Math.min(270, c / 100 * 360));
   $('#wheel').style.setProperty('--success-angle', `${angle}deg`);
+  $('#wheel').style.setProperty('--sector-start', `180deg`);
   $('#chanceText').textContent = `${c.toFixed(2)}%`;
   $('#chanceLabel').textContent = state.selectedSource && state.selectedTarget ? 'шанс успеха' : 'выберите скин';
   document.querySelectorAll('.chance-presets button').forEach(btn => {
@@ -169,24 +170,32 @@ export async function doUpgrade(){
   state.spinning = true;
   const c = chance();
   const successAngle = Math.max(0.36, Math.min(270, c / 100 * 360));
+  const sectorStart = 180; // 180deg = низ колеса. Синий сектор начинается снизу.
 
-  // Визуальный результат и фактический результат теперь считаются из одной точки.
-  // Если стрелка остановилась в синем секторе — победа, если в тёмном — проигрыш.
+  // Фактический результат считается по той же точке, куда визуально остановилась стрелка.
+  // 0deg у стрелки — верх, 180deg — низ. Успех = попадание в синий сектор от низа по часовой.
   const successRoll = Math.random() * 100 <= c;
-  const safeGap = Math.min(2.5, Math.max(0.15, successAngle / 8));
-  const finalAngle = successRoll
-    ? randomBetween(safeGap, Math.max(safeGap + 0.05, successAngle - safeGap))
-    : randomBetween(Math.min(359, successAngle + safeGap + 2), 359);
-  const success = finalAngle <= successAngle;
-  const roll = finalAngle / 360 * 100;
+  const safeGap = Math.min(3, Math.max(0.25, successAngle / 10));
+  const successEnd = Math.max(safeGap + 0.1, successAngle - safeGap);
+  const failStart = Math.min(359.5, successAngle + safeGap + 2);
+  const finalRelativeAngle = successRoll
+    ? randomBetween(safeGap, successEnd)
+    : randomBetween(failStart, 359.5);
+  const finalAngle = (sectorStart + finalRelativeAngle) % 360;
+  const relativeCheck = ((finalAngle - sectorStart + 360) % 360);
+  const success = relativeCheck >= 0 && relativeCheck <= successAngle;
+  const roll = relativeCheck / 360 * 100;
 
+  const duration = Math.floor(5000 + Math.random() * 2000);
   const current = ((state.arrowRotation % 360) + 360) % 360;
   const delta = ((finalAngle - current + 360) % 360);
-  state.arrowRotation += 1440 + delta;
-  $('#wheelArrow').style.transform = `rotate(${state.arrowRotation}deg)`;
+  state.arrowRotation += 2160 + delta;
+  const arrow = $('#wheelArrow');
+  arrow.style.transitionDuration = `${duration}ms`;
+  arrow.style.transform = `rotate(${state.arrowRotation}deg)`;
   $('#upgradeBtn').disabled = true;
 
-  await new Promise(r => setTimeout(r, 1900));
+  await new Promise(r => setTimeout(r, duration + 150));
   await removeInventoryItem(state.user.uid, state.selectedSource.instanceId);
   if(success){
     await addInventoryItem(state.user.uid, state.selectedTarget);
