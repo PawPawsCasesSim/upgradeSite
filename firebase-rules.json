@@ -1,37 +1,41 @@
 {
   "rules": {
     "users": {
+      ".read": "auth !== null",
       "$uid": {
-        ".read": "$uid === auth.uid",
-        ".write": "$uid === auth.uid",
-
+        ".write": "$uid === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin'",
         "balance": {
-          ".write": false
+          ".write": "$uid === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin'"
         },
-
         "inventory": {
-          ".read": "$uid === auth.uid",
-          ".write": "$uid === auth.uid"
+          ".write": "$uid === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin'"
         },
-
         "stats": {
-          ".read": "$uid === auth.uid",
-          ".write": "$uid === auth.uid"
+          ".write": "$uid === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin'"
         }
       }
     },
-
     "upgrades": {
-      // Читать могут все авторизованные
       ".read": "auth !== null",
+      ".indexOn": ["uid", "createdAt"],
       "$upgradeId": {
-        ".write": "auth !== null && (data.child('uid').val() === auth.uid || !data.exists())"
+        ".write": "auth !== null && (!data.exists() || newData.child('uid').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin')"
       }
     },
-
-    "admin_logs": {
+    "liveDrops": {
+      ".read": "auth !== null",
+      ".indexOn": ["createdAt", "uid"],
+      "$dropId": {
+        ".write": "auth !== null"
+      }
+    },
+    "meta": {
       ".read": "auth !== null",
       ".write": "auth !== null"
+    },
+    "admin_logs": {
+      ".read": "root.child('users').child(auth.uid).child('role').val() === 'admin'",
+      ".write": "root.child('users').child(auth.uid).child('role').val() === 'admin'"
     }
   }
 }

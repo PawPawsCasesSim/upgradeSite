@@ -1,5 +1,15 @@
 {
+  "name": "upgrader-site-ready",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "serve": "firebase emulators:start",
+    "deploy": "firebase deploy"
+  },
   "dependencies": {
-    "node-fetch": "^3.3.2"
+    "firebase": "^10.12.5"
+  },
+  "devDependencies": {
+    "firebase-tools": "^13.15.0"
   }
 }

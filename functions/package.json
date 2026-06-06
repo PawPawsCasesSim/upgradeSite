@@ -1,27 +1,16 @@
 {
   "name": "functions",
-  "description": "Cloud Functions for Firebase",
+  "description": "Optional Firebase Functions for Upgrader",
   "scripts": {
-    "lint": "eslint .",
+    "lint": "echo no-lint",
     "serve": "firebase emulators:start --only functions",
-    "shell": "firebase functions:shell",
-    "start": "npm run shell",
-    "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "deploy": "firebase deploy --only functions"
   },
-  "engines": {
-    "node": "24"
-  },
+  "engines": { "node": "20" },
   "main": "index.js",
   "dependencies": {
-    "firebase-admin": "^13.6.0",
-    "firebase-functions": "^7.0.0",
-    "node-fetch": "^3.3.2"
-  },
-  "devDependencies": {
-    "eslint": "^8.15.0",
-    "eslint-config-google": "^0.14.0",
-    "firebase-functions-test": "^3.4.1"
+    "firebase-admin": "^12.5.0",
+    "firebase-functions": "^5.1.1"
   },
   "private": true
 }

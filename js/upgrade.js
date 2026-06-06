@@ -1,197 +1,126 @@
-// js/upgrade.js
-import { processUpgrade } from "./db.js";
-import { showToast } from "./ui.js";
+import { FALLBACK_SKINS } from './items.js';
+import { $, card, selectedMarkup, itemTitle, fmt, toast } from './ui.js';
+import { addInventoryItem, removeInventoryItem, addBalance, incStats, recordUpgrade } from './db.js';
 
-let isSpinning = false;
+export const state = {
+  user: null,
+  profile: null,
+  catalog: FALLBACK_SKINS,
+  activeList: 'shop',
+  selectedShop: null,
+  selectedSource: null,
+  selectedTarget: null,
+  preset: null,
+  spinning: false
+};
 
-// Нарисовать рулетку на canvas
-export function drawRoulette(canvas, chancePercent) {
-  const ctx = canvas.getContext("2d");
-  const cx = canvas.width / 2;
-  const cy = canvas.height / 2;
-  const R = cx - 10;
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Рассчитываем углы
-  const winAngle = (chancePercent / 100) * 2 * Math.PI;
-  const loseAngle = 2 * Math.PI - winAngle;
-
-  // Фон круга
-  ctx.beginPath();
-  ctx.arc(cx, cy, R, 0, 2 * Math.PI);
-  ctx.fillStyle = "#0d1117";
-  ctx.fill();
-
-  // Проигрышный сектор (красный) — занимает большую часть
-  ctx.beginPath();
-  ctx.moveTo(cx, cy);
-  ctx.arc(cx, cy, R, -Math.PI / 2 + winAngle, -Math.PI / 2 + 2 * Math.PI);
-  ctx.closePath();
-  ctx.fillStyle = "#1a0408";
-  ctx.fill();
-  ctx.strokeStyle = "#ff1744";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Выигрышный сектор (зелёный)
-  ctx.beginPath();
-  ctx.moveTo(cx, cy);
-  ctx.arc(cx, cy, R, -Math.PI / 2, -Math.PI / 2 + winAngle);
-  ctx.closePath();
-  ctx.fillStyle = "#041a0a";
-  ctx.fill();
-  ctx.strokeStyle = "#00e676";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Граница секторов — линии
-  ctx.beginPath();
-  ctx.moveTo(cx, cy);
-  ctx.lineTo(cx + Math.cos(-Math.PI / 2) * R, cy + Math.sin(-Math.PI / 2) * R);
-  ctx.strokeStyle = "#00e676";
-  ctx.lineWidth = 3;
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(cx, cy);
-  ctx.lineTo(
-    cx + Math.cos(-Math.PI / 2 + winAngle) * R,
-    cy + Math.sin(-Math.PI / 2 + winAngle) * R
-  );
-  ctx.strokeStyle = "#ff1744";
-  ctx.lineWidth = 3;
-  ctx.stroke();
-
-  // Внешний ободок
-  ctx.beginPath();
-  ctx.arc(cx, cy, R, 0, 2 * Math.PI);
-  ctx.strokeStyle = "rgba(0,212,255,0.3)";
-  ctx.lineWidth = 3;
-  ctx.stroke();
-
-  // Центральный кружок
-  ctx.beginPath();
-  ctx.arc(cx, cy, 12, 0, 2 * Math.PI);
-  ctx.fillStyle = "#00d4ff";
-  ctx.fill();
-
-  // Текст шанса в зелёном секторе (если шанс >= 10%)
-  if (chancePercent >= 10) {
-    const midAngle = -Math.PI / 2 + winAngle / 2;
-    const textR = R * 0.55;
-    ctx.fillStyle = "#00e676";
-    ctx.font = "bold 16px Rajdhani, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(
-      `${chancePercent}%`,
-      cx + Math.cos(midAngle) * textR,
-      cy + Math.sin(midAngle) * textR
-    );
-  }
+export function inventoryArray(){
+  const inv = state.profile?.inventory || {};
+  if (Array.isArray(inv)) return inv.map((x,i)=>({ ...x, instanceId: x.instanceId || String(i) }));
+  return Object.entries(inv).map(([k,v]) => ({ ...v, instanceId: k }));
 }
 
-// Анимация стрелки
-export async function spinRoulette(arrowEl, chancePercent, won) {
-  if (isSpinning) return;
-  isSpinning = true;
+export function chance(){
+  if(!state.selectedSource || !state.selectedTarget) return 0;
+  let c = (Number(state.selectedSource.price) / Number(state.selectedTarget.price)) * 100;
+  if (state.preset) c = Math.min(Number(state.preset), c);
+  return Math.max(0.01, Math.min(75, c));
+}
 
-  // Определяем целевой угол
-  // Зелёная зона: от 0 до winAngle (в градусах от вершины, т.е. -90°)
-  const winDegrees = (chancePercent / 100) * 360;
+function filterList(list, searchSel, minSel, maxSel){
+  const q = $(searchSel).value.trim().toLowerCase();
+  const min = Number($(minSel).value || 0);
+  const max = Number($(maxSel).value || 0);
+  return list.filter(i => {
+    const title = itemTitle(i).toLowerCase();
+    return (!q || title.includes(q)) && (!min || i.price >= min) && (!max || i.price <= max);
+  });
+}
 
-  let targetDeg;
-  if (won) {
-    // Попадаем в зелёный сектор (от 0 до winDegrees)
-    targetDeg = Math.random() * winDegrees * 0.8 + winDegrees * 0.1;
+export function renderAll(){ renderTop(); renderSelected(); renderShop(); renderTargets(); renderChance(); }
+
+export function renderTop(){
+  $('#userBalance').textContent = fmt(state.profile?.balance || 0);
+  $('#avatarLetter').textContent = (state.profile?.nickname || state.user?.email || 'U')[0].toUpperCase();
+  $('#adminBtn').classList.toggle('hidden', state.profile?.role !== 'admin');
+}
+
+export function renderSelected(){
+  const s = $('#selectedSource');
+  const t = $('#selectedTarget');
+  s.innerHTML = selectedMarkup(state.selectedSource);
+  t.innerHTML = selectedMarkup(state.selectedTarget);
+  s.classList.toggle('hidden', !state.selectedSource);
+  t.classList.toggle('hidden', !state.selectedTarget);
+  $('#sourcePanel .empty-select').classList.toggle('hidden', !!state.selectedSource);
+  $('#targetPanel .empty-select').classList.toggle('hidden', !!state.selectedTarget);
+}
+
+export function renderShop(){
+  const list = state.activeList === 'shop' ? state.catalog : inventoryArray();
+  const filtered = filterList(list, '#shopSearch', '#shopMin', '#shopMax');
+  $('#shopGrid').innerHTML = filtered.map(i => card(i, state.activeList, (state.activeList==='shop' ? state.selectedShop?.id===i.id : state.selectedSource?.instanceId===i.instanceId))).join('') || '<div class="muted">Ничего не найдено</div>';
+  $('#buySelectedBtn').classList.toggle('hidden', state.activeList !== 'shop' || !state.selectedShop);
+}
+
+export function renderTargets(){
+  let list = state.catalog;
+  if (state.selectedSource) list = list.filter(i => Number(i.price) > Number(state.selectedSource.price));
+  else list = [];
+  list = filterList(list, '#targetSearch', '#targetMin', '#targetMax');
+  $('#targetGrid').innerHTML = list.map(i => card(i, 'target', state.selectedTarget?.id===i.id)).join('') || `<div class="muted" style="padding:12px">Сначала выбери свой скин. Здесь будут только предметы дороже выбранного.</div>`;
+}
+
+export function renderChance(){
+  const c = chance();
+  $('#chanceText').textContent = `${c.toFixed(2)}%`;
+  $('#chanceLabel').textContent = state.selectedSource && state.selectedTarget ? 'средний шанс' : 'выберите скин';
+}
+
+export async function buySelected(){
+  if(!state.selectedShop) return toast('Выбери скин в магазине.');
+  const price = Number(state.selectedShop.price);
+  if(Number(state.profile?.balance || 0) < price) return toast('Недостаточно баланса.');
+  await addBalance(state.user.uid, -price);
+  await addInventoryItem(state.user.uid, state.selectedShop);
+  toast('Скин куплен и добавлен в инвентарь.');
+  state.selectedShop = null;
+}
+
+export async function doUpgrade(){
+  if(state.spinning) return;
+  if(!state.selectedSource || !state.selectedTarget) return toast('Выбери свой скин и цель апгрейда.');
+  if(Number(state.selectedTarget.price) <= Number(state.selectedSource.price)) return toast('Цель должна быть дороже твоего скина.');
+  state.spinning = true;
+  const c = chance();
+  const roll = Math.random() * 100;
+  const success = roll <= c;
+  const extra = 1080 + Math.round(Math.random()*720) + (success ? 20 : 160);
+  $('#wheel').style.transform = `rotate(${extra}deg)`;
+  $('#upgradeBtn').disabled = true;
+  await new Promise(r => setTimeout(r, 1900));
+  await removeInventoryItem(state.user.uid, state.selectedSource.instanceId);
+  if(success){
+    await addInventoryItem(state.user.uid, state.selectedTarget);
+    await incStats(state.user.uid, 'wins');
+    toast(`Успех! Выпал ${itemTitle(state.selectedTarget)}.`);
   } else {
-    // Попадаем в красный сектор (от winDegrees до 360)
-    targetDeg = winDegrees + Math.random() * (360 - winDegrees) * 0.8 + (360 - winDegrees) * 0.1;
+    await incStats(state.user.uid, 'losses');
+    toast('Неудача. Предмет сгорел.');
   }
-
-  // Добавляем 3–5 полных оборотов для эффекта
-  const fullRotations = (3 + Math.floor(Math.random() * 3)) * 360;
-  const finalDeg = fullRotations + targetDeg;
-
-  // Применяем CSS-анимацию
-  arrowEl.style.transition = "none";
-  arrowEl.style.transform = "translateX(-50%) rotate(0deg)";
-
-  await new Promise(r => setTimeout(r, 50));
-
-  const duration = 3500 + Math.random() * 1000;
-  arrowEl.style.transition = `transform ${duration}ms cubic-bezier(0.17, 0.67, 0.12, 1.0)`;
-  arrowEl.style.transform = `translateX(-50%) rotate(${finalDeg}deg)`;
-
-  await new Promise(r => setTimeout(r, duration + 100));
-
-  isSpinning = false;
-  return finalDeg;
-}
-
-// Сбросить стрелку
-export function resetArrow(arrowEl) {
-  arrowEl.style.transition = "none";
-  arrowEl.style.transform = "translateX(-50%) rotate(0deg)";
-}
-
-// Основная функция апгрейда
-export async function runUpgrade(uid, sourceItem, targetItem, chancePercent, onResult) {
-  if (isSpinning) return;
-
-  const arrowEl = document.getElementById("roulette-arrow");
-  const upgradeBtn = document.getElementById("upgrade-btn");
-  const btnText = upgradeBtn.querySelector(".upgrade-btn-text");
-
-  upgradeBtn.disabled = true;
-  btnText.textContent = "ИДЁТ АПГРЕЙД...";
-
-  try {
-    // 1. Выполняем апгрейд на "сервере" (Firebase)
-    const result = await processUpgrade(uid, sourceItem, targetItem, chancePercent);
-
-    // 2. Анимируем стрелку к результату
-    await spinRoulette(arrowEl, chancePercent, result.won);
-
-    // 3. Показываем результат
-    onResult(result.won, targetItem);
-
-    // Звуки
-    playSound(result.won ? "win" : "lose");
-
-  } catch (e) {
-    showToast("Ошибка апгрейда: " + e.message, "error");
-  } finally {
-    upgradeBtn.disabled = false;
-    btnText.textContent = "АПГРЕЙД";
-  }
-}
-
-function playSound(type) {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    if (type === "win") {
-      osc.frequency.setValueAtTime(440, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.3);
-      osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.6);
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.8);
-      osc.start(); osc.stop(ctx.currentTime + 0.8);
-    } else {
-      osc.frequency.setValueAtTime(440, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 0.4);
-      osc.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 0.8);
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.9);
-      osc.start(); osc.stop(ctx.currentTime + 0.9);
-    }
-  } catch (e) {
-    // Audio not available
-  }
+  await incStats(state.user.uid, 'upgrades');
+  await recordUpgrade({
+    uid: state.user.uid,
+    nickname: state.profile?.nickname || 'Player',
+    chance: c,
+    roll,
+    sourceItem: state.selectedSource,
+    targetItem: state.selectedTarget
+  }, success);
+  state.selectedSource = null;
+  state.selectedTarget = null;
+  state.preset = null;
+  $('#upgradeBtn').disabled = false;
+  state.spinning = false;
+  renderAll();
 }
