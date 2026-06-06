@@ -243,3 +243,12 @@ body{background:radial-gradient(circle at 50% 0%,rgba(0,170,255,.18),transparent
   background:#67efff!important;
   filter:drop-shadow(0 0 6px rgba(0,210,255,.75))!important;
 }
+
+/* v11: multi-buy and multi-upgrade */
+.buy-controls{display:flex;align-items:center;gap:8px}
+.buy-controls input{width:72px;height:38px;border-radius:12px;border:1px solid #1e69a8;background:#0a1524;color:#e8f8ff;text-align:center;font-weight:900;outline:none}
+.buy-controls input:focus{border-color:#31dfff;box-shadow:0 0 0 3px rgba(49,223,255,.12)}
+.selected-stack{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;max-width:128px}
+.selected-stack img{width:42px!important;height:32px!important;object-fit:contain!important;margin:0!important;filter:drop-shadow(0 8px 12px rgba(0,0,0,.35))}
+.selected-item small{display:block;color:#82abc8;margin-top:4px;font-size:11px;font-weight:800}
+.skin-card.active:after{content:'✓';position:absolute;right:8px;bottom:8px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#28dcff;color:#03111e;font-weight:1000;box-shadow:0 0 14px rgba(40,220,255,.45)}

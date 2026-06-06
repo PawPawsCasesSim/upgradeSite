@@ -1,7 +1,7 @@
 import { $, $$, toast, liveDropMarkup, card, fmt } from './ui.js';
 import { registerUser, loginUser, logoutUser, authChanged, getAuthError } from './auth.js';
 import { getUserProfile, listenUserProfile, listenLiveDrops, listenUpgradeCount, listenOnlineCount, setPresence } from './db.js';
-import { state, renderAll, renderShop, renderTargets, renderChance, buySelected, doUpgrade, inventoryArray, sellInventoryItem, sellAllInventoryItems, desiredChanceFromPreset, autoSelectTargetByChance } from './upgrade.js';
+import { state, renderAll, renderShop, renderTargets, renderChance, buySelected, doUpgrade, inventoryArray, sellInventoryItem, sellAllInventoryItems, desiredChanceFromPreset, autoSelectTargetByChance, toggleSourceItem, selectedSources } from './upgrade.js';
 import { initAdmin, fillAdminItems } from './admin.js';
 import { loadCatalogFromCsapi } from './items.js';
 
@@ -47,9 +47,11 @@ function bindStatic(){
     const btn = e.target.closest('.skin-card'); if(!btn) return;
     if(btn.dataset.mode === 'shop') state.selectedShop = state.catalog.find(i => i.id === btn.dataset.id);
     if(btn.dataset.mode === 'inventory') {
-      state.selectedSource = inventoryArray().find(i => i.instanceId === btn.dataset.id);
-      if (state.desiredChance) autoSelectTargetByChance(state.desiredChance);
-      else if(state.selectedTarget && state.selectedTarget.price <= state.selectedSource.price) state.selectedTarget = null;
+      const item = inventoryArray().find(i => i.instanceId === btn.dataset.id);
+      const changed = toggleSourceItem(item);
+      if (changed && state.desiredChance && state.selectedSource) autoSelectTargetByChance(state.desiredChance);
+      else if(state.selectedTarget && state.selectedSource && state.selectedTarget.price <= state.selectedSource.price) state.selectedTarget = null;
+      else if(!state.selectedSource) state.selectedTarget = null;
     }
     renderAll();
   });

@@ -9,6 +9,7 @@ export const state = {
   activeList: 'shop',
   selectedShop: null,
   selectedSource: null,
+  selectedSources: [],
   selectedTarget: null,
   desiredChance: null,
   spinning: false,
@@ -19,6 +20,53 @@ export function inventoryArray(){
   const inv = state.profile?.inventory || {};
   if (Array.isArray(inv)) return inv.map((x,i)=>({ ...x, instanceId: x.instanceId || String(i) }));
   return Object.entries(inv).map(([k,v]) => ({ ...v, instanceId: k }));
+}
+
+export function selectedSources(){
+  return Array.isArray(state.selectedSources) ? state.selectedSources : [];
+}
+
+export function selectedSourceValue(){
+  return selectedSources().reduce((sum, item) => sum + Number(item.price || 0), 0);
+}
+
+export function syncSelectedSource(){
+  const items = selectedSources();
+  if(!items.length){ state.selectedSource = null; return; }
+  const price = selectedSourceValue();
+  state.selectedSource = {
+    id: 'multi-source',
+    instanceId: items.map(i => i.instanceId).join('|'),
+    weapon: items.length === 1 ? items[0].weapon : `${items.length} предметов`,
+    name: items.length === 1 ? items[0].name : 'выбрано для апгрейда',
+    image: items[0]?.image || '',
+    rarity: items[0]?.rarity || 'blue',
+    price,
+    items
+  };
+}
+
+export function toggleSourceItem(item){
+  if(!item) return false;
+  const items = selectedSources();
+  const exists = items.some(i => i.instanceId === item.instanceId);
+  if(exists){
+    state.selectedSources = items.filter(i => i.instanceId !== item.instanceId);
+    syncSelectedSource();
+    return true;
+  }
+  if(items.length >= 5){
+    toast('Можно поставить максимум 5 предметов за один апгрейд.');
+    return false;
+  }
+  state.selectedSources = [...items, item];
+  syncSelectedSource();
+  return true;
+}
+
+export function clearSelectedSources(){
+  state.selectedSources = [];
+  syncSelectedSource();
 }
 
 export function chance(){
@@ -83,6 +131,14 @@ export function autoSelectTargetByChance(targetChance){
 
 export function renderAll(){ renderTop(); renderSelected(); renderShop(); renderTargets(); renderChance(); }
 
+function selectedSourceSelectedMarkup(){
+  const items = selectedSources();
+  if(!items.length) return '';
+  if(items.length === 1) return selectedMarkup(items[0]);
+  const thumbs = items.slice(0,5).map(i => i.image ? `<img src="${i.image}" alt="">` : '').join('');
+  return `<div class="selected-stack">${thumbs}</div><div><b>${items.length} предметов в апгрейде</b><span>◎ ${fmt(selectedSourceValue())}</span><small>Максимум 5 предметов</small></div>`;
+}
+
 export function renderTop(){
   $('#userBalance').textContent = fmt(state.profile?.balance || 0);
   $('#avatarLetter').textContent = (state.profile?.nickname || state.user?.email || 'U')[0].toUpperCase();
@@ -92,7 +148,7 @@ export function renderTop(){
 export function renderSelected(){
   const s = $('#selectedSource');
   const t = $('#selectedTarget');
-  s.innerHTML = selectedMarkup(state.selectedSource);
+  s.innerHTML = selectedSourceSelectedMarkup();
   t.innerHTML = selectedMarkup(state.selectedTarget);
   s.classList.toggle('hidden', !state.selectedSource);
   t.classList.toggle('hidden', !state.selectedTarget);
@@ -104,8 +160,8 @@ export function renderShop(){
   const list = state.activeList === 'shop' ? state.catalog : inventoryArray();
   const filtered = filterList(list, '#shopSearch', '#shopMin', '#shopMax');
   const { sliced, more } = visibleSlice(filtered);
-  $('#shopGrid').innerHTML = sliced.map(i => card(i, state.activeList, (state.activeList==='shop' ? state.selectedShop?.id===i.id : state.selectedSource?.instanceId===i.instanceId))).join('') + more || '<div class="muted">Ничего не найдено</div>';
-  $('#buySelectedBtn').classList.toggle('hidden', state.activeList !== 'shop' || !state.selectedShop);
+  $('#shopGrid').innerHTML = sliced.map(i => card(i, state.activeList, (state.activeList==='shop' ? state.selectedShop?.id===i.id : selectedSources().some(x => x.instanceId===i.instanceId)))).join('') + more || '<div class="muted">Ничего не найдено</div>';
+  $('#buyControls').classList.toggle('hidden', state.activeList !== 'shop' || !state.selectedShop);
 }
 
 export function renderTargets(){
@@ -134,11 +190,14 @@ export function renderChance(){
 
 export async function buySelected(){
   if(!state.selectedShop) return toast('Выбери скин в магазине.');
+  const qtyInput = $('#buyQty');
+  const qty = Math.max(1, Math.min(99, Math.floor(Number(qtyInput?.value || 1))));
   const price = Number(state.selectedShop.price);
-  if(Number(state.profile?.balance || 0) < price) return toast('Недостаточно баланса.');
-  await addBalance(state.user.uid, -price);
-  await addInventoryItem(state.user.uid, state.selectedShop);
-  toast('Скин куплен и добавлен в инвентарь.');
+  const total = price * qty;
+  if(Number(state.profile?.balance || 0) < total) return toast(`Недостаточно баланса. Нужно ◎ ${fmt(total)}.`);
+  await addBalance(state.user.uid, -total);
+  for(let i = 0; i < qty; i++) await addInventoryItem(state.user.uid, state.selectedShop);
+  toast(`Куплено: ${qty} шт. за ◎ ${fmt(total)}.`);
   state.selectedShop = null;
 }
 
@@ -148,7 +207,7 @@ export async function sellInventoryItem(instanceId){
   const sellPrice = Math.floor(Number(item.price || 0));
   await removeInventoryItem(state.user.uid, instanceId);
   await addBalance(state.user.uid, sellPrice);
-  if(state.selectedSource?.instanceId === instanceId) state.selectedSource = null;
+  if(selectedSources().some(i => i.instanceId === instanceId)){ state.selectedSources = selectedSources().filter(i => i.instanceId !== instanceId); syncSelectedSource(); }
   toast(`Продано: ${itemTitle(item)} за ◎ ${fmt(sellPrice)}.`);
   renderAll();
 }
@@ -159,7 +218,7 @@ export async function sellAllInventoryItems(){
   const total = Math.floor(items.reduce((sum, item) => sum + Number(item.price || 0), 0));
   await Promise.all(items.map(item => removeInventoryItem(state.user.uid, item.instanceId)));
   await addBalance(state.user.uid, total);
-  state.selectedSource = null;
+  clearSelectedSources();
   toast(`Продано предметов: ${items.length}. Получено ◎ ${fmt(total)}.`);
   renderAll();
 }
@@ -196,7 +255,7 @@ export async function doUpgrade(){
   const relativeCheck = normDeg(finalAngle - sectorStart);
   const roll = relativeCheck / 360 * 100;
 
-  const duration = Math.floor(5000 + Math.random() * 2000);
+  const duration = Math.floor(8000 + Math.random() * 3000);
   const current = normDeg(state.arrowRotation);
   const delta = normDeg(finalAngle - current);
   state.arrowRotation += 2160 + delta;
@@ -206,7 +265,9 @@ export async function doUpgrade(){
   $('#upgradeBtn').disabled = true;
 
   await new Promise(r => setTimeout(r, duration + 150));
-  await removeInventoryItem(state.user.uid, state.selectedSource.instanceId);
+  const usedItems = selectedSources();
+  const sourceSnapshot = { ...state.selectedSource, items: usedItems };
+  for (const item of usedItems) await removeInventoryItem(state.user.uid, item.instanceId);
   if(success){
     await addInventoryItem(state.user.uid, state.selectedTarget);
     await incStats(state.user.uid, 'wins');
@@ -221,10 +282,10 @@ export async function doUpgrade(){
     nickname: state.profile?.nickname || 'Player',
     chance: c,
     roll,
-    sourceItem: state.selectedSource,
+    sourceItem: sourceSnapshot,
     targetItem: state.selectedTarget
   }, success);
-  state.selectedSource = null;
+  clearSelectedSources();
   state.selectedTarget = null;
   state.desiredChance = null;
   $('#upgradeBtn').disabled = false;
