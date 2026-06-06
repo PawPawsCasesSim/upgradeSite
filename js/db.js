@@ -18,12 +18,74 @@ export async function createUserProfile(uid, { nickname, email }) {
 }
 export async function getUserProfile(uid) { const s = await get(userRef(uid)); return s.exists() ? s.val() : null; }
 export function listenUserProfile(uid, cb) { return onValue(userRef(uid), s => cb(s.exists() ? s.val() : null)); }
+function normalizeLiveDrop(id, value){
+  if(!value) return null;
+  const targetItem = value.targetItem || value.target || {};
+  if(!targetItem || !Object.keys(targetItem).length) return null;
+  return {
+    id,
+    uid: value.uid,
+    nickname: value.nickname || 'Player',
+    chance: Number(value.chance || 0),
+    sourceItem: value.sourceItem || {},
+    targetItem,
+    createdAt: Number(value.createdAt || Date.now())
+  };
+}
+
 export function listenLiveDrops(cb) {
-  return onValue(query(ref(db, 'liveDrops'), orderByChild('createdAt'), limitToLast(30)), s => {
+  let live = [];
+  let successfulUpgrades = [];
+  const emit = () => {
+    const map = new Map();
+    [...live, ...successfulUpgrades].forEach(d => {
+      if(!d) return;
+      const key = d.id || `${d.uid || 'u'}-${d.createdAt}-${d.targetItem?.id || d.targetItem?.name || 'skin'}`;
+      map.set(key, d);
+    });
+    const arr = [...map.values()].sort((a,b) => Number(b.createdAt || 0) - Number(a.createdAt || 0)).slice(0,30);
+    cb(arr);
+  };
+
+  const unsubLive = onValue(query(ref(db, 'liveDrops'), orderByChild('createdAt'), limitToLast(30)), s => {
     const arr = [];
-    s.forEach(ch => arr.push({ id: ch.key, ...ch.val() }));
-    cb(arr.reverse());
+    s.forEach(ch => { const d = normalizeLiveDrop(ch.key, ch.val()); if(d) arr.push(d); });
+    live = arr;
+    emit();
   });
+
+  // Запасной источник: если liveDrops не был создан из-за старых правил/старой версии,
+  // лента всё равно берёт последние успешные апгрейды из /upgrades.
+  const unsubUpgrades = onValue(query(ref(db, 'upgrades'), orderByChild('createdAt'), limitToLast(80)), s => {
+    const arr = [];
+    s.forEach(ch => {
+      const v = ch.val();
+      if(v?.success === true){
+        const d = normalizeLiveDrop(ch.key, v);
+        if(d) arr.push(d);
+      }
+    });
+    successfulUpgrades = arr;
+    emit();
+  });
+
+  return () => { unsubLive(); unsubUpgrades(); };
+}
+
+export async function findUserByNickname(nickname){
+  const wanted = String(nickname || '').trim().toLowerCase();
+  if(!wanted) return null;
+  const s = await get(ref(db, 'users'));
+  const matches = [];
+  s.forEach(ch => {
+    const user = ch.val() || {};
+    if(String(user.nickname || '').trim().toLowerCase() === wanted){
+      matches.push({ uid: ch.key, ...user });
+    }
+  });
+  if(matches.length === 1) return matches[0];
+  if(matches.length > 1) return { duplicate: true, matches };
+  return null;
 }
 export function listenUpgradeCount(cb){ return onValue(ref(db,'meta/upgradeCount'), s => cb(s.val() || 0)); }
 export function listenOnlineCount(cb){ return onValue(ref(db,'presence'), s => cb(s.exists() ? s.size : 0)); }

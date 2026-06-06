@@ -1,5 +1,5 @@
 import { $, toast } from './ui.js';
-import { addBalance, addInventoryItem, adminLog } from './db.js';
+import { addBalance, addInventoryItem, adminLog, findUserByNickname } from './db.js';
 import { state } from './upgrade.js';
 
 export function fillAdminItems(){
@@ -14,20 +14,40 @@ export function initAdmin(){
   $('#grantItemBtn').addEventListener('click', grantItem);
 }
 
+async function resolveTargetUser(){
+  const nickname = $('#adminNickname').value.trim();
+  if(!nickname){
+    toast('Укажи ник игрока.');
+    return null;
+  }
+  const found = await findUserByNickname(nickname);
+  if(!found){
+    toast(`Игрок с ником ${nickname} не найден.`);
+    $('#adminMsg').textContent = `Игрок с ником ${nickname} не найден. Проверь точное написание ника.`;
+    return null;
+  }
+  if(found.duplicate){
+    toast('Найдено несколько игроков с таким ником.');
+    $('#adminMsg').textContent = `Найдено несколько игроков с ником ${nickname}. Попроси игрока сменить ник или выдай вручную через Firebase.`;
+    return null;
+  }
+  return found;
+}
+
 async function grantBalance(){
-  const uid = $('#adminUid').value.trim();
+  const target = await resolveTargetUser();
   const amount = Number($('#adminBalance').value || 0);
-  if(!uid || !amount) return toast('Укажи UID и сумму.');
-  await addBalance(uid, amount);
-  await adminLog({ adminUid: state.user.uid, action: 'grant_balance', targetUid: uid, amount });
-  $('#adminMsg').textContent = `Выдано ${amount} монет игроку ${uid}`;
+  if(!target || !amount) return toast('Укажи ник и сумму.');
+  await addBalance(target.uid, amount);
+  await adminLog({ adminUid: state.user.uid, action: 'grant_balance', targetUid: target.uid, targetNickname: target.nickname, amount });
+  $('#adminMsg').textContent = `Выдано ${amount} монет игроку ${target.nickname} (${target.uid})`;
 }
 
 async function grantItem(){
-  const uid = $('#adminUid').value.trim();
+  const target = await resolveTargetUser();
   const item = (state.catalog || []).find(x => x.id === $('#adminItem').value);
-  if(!uid || !item) return toast('Укажи UID и предмет.');
-  await addInventoryItem(uid, item);
-  await adminLog({ adminUid: state.user.uid, action: 'grant_item', targetUid: uid, item });
-  $('#adminMsg').textContent = `Предмет выдан игроку ${uid}`;
+  if(!target || !item) return toast('Укажи ник и предмет.');
+  await addInventoryItem(target.uid, item);
+  await adminLog({ adminUid: state.user.uid, action: 'grant_item', targetUid: target.uid, targetNickname: target.nickname, item });
+  $('#adminMsg').textContent = `Предмет выдан игроку ${target.nickname} (${target.uid})`;
 }
