@@ -226,3 +226,20 @@ body{background:radial-gradient(circle at 50% 0%,rgba(0,170,255,.18),transparent
   background:#67efff!important;
   filter:drop-shadow(0 0 7px rgba(0,210,255,.75))!important;
 }
+
+/* v9: sector is centered at 6 o'clock and spreads equally left/right. */
+.wheel:after{
+  background:conic-gradient(from var(--sector-start,180deg),#22d9ff 0deg var(--success-angle),transparent var(--success-angle) 360deg)!important;
+}
+.wheel-arrow{
+  transition-property:transform!important;
+  transition-timing-function:cubic-bezier(.08,.72,.08,1)!important;
+}
+.wheel-arrow:before{
+  top:26px!important;
+  width:8px!important;
+  height:16px!important;
+  clip-path:polygon(50% 100%,12% 0,88% 0)!important;
+  background:#67efff!important;
+  filter:drop-shadow(0 0 6px rgba(0,210,255,.75))!important;
+}

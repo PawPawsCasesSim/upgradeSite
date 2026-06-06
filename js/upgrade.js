@@ -120,8 +120,11 @@ export function renderTargets(){
 export function renderChance(){
   const c = chance();
   const angle = Math.max(0, Math.min(270, c / 100 * 360));
+  // 0deg = 12 часов, 180deg = 6 часов.
+  // Сектор успеха всегда ЦЕНТРИРОВАН на 6 часах и расходится в обе стороны поровну.
+  const sectorStart = (180 - angle / 2 + 360) % 360;
   $('#wheel').style.setProperty('--success-angle', `${angle}deg`);
-  $('#wheel').style.setProperty('--sector-start', `180deg`);
+  $('#wheel').style.setProperty('--sector-start', `${sectorStart}deg`);
   $('#chanceText').textContent = `${c.toFixed(2)}%`;
   $('#chanceLabel').textContent = state.selectedSource && state.selectedTarget ? 'шанс успеха' : 'выберите скин';
   document.querySelectorAll('.chance-presets button').forEach(btn => {
@@ -162,6 +165,15 @@ export async function sellAllInventoryItems(){
 }
 
 function randomBetween(min, max){ return min + Math.random() * (max - min); }
+function normDeg(v){ return ((v % 360) + 360) % 360; }
+function angleInSector(angle, start, size){
+  const rel = normDeg(angle - start);
+  return rel >= 0 && rel <= size;
+}
+function nearSectorBorder(angle, start, size, gap){
+  const rel = normDeg(angle - start);
+  return rel < gap || Math.abs(rel - size) < gap || Math.abs(rel - 360) < gap;
+}
 
 export async function doUpgrade(){
   if(state.spinning) return;
@@ -170,25 +182,23 @@ export async function doUpgrade(){
   state.spinning = true;
   const c = chance();
   const successAngle = Math.max(0.36, Math.min(270, c / 100 * 360));
-  const sectorStart = 180; // 180deg = низ колеса. Синий сектор начинается снизу.
+  // Синий сектор ЦЕНТРИРОВАН снизу: середина сектора = 180deg / 6 часов.
+  const sectorStart = normDeg(180 - successAngle / 2);
 
-  // Фактический результат считается по той же точке, куда визуально остановилась стрелка.
-  // 0deg у стрелки — верх, 180deg — низ. Успех = попадание в синий сектор от низа по часовой.
-  const successRoll = Math.random() * 100 <= c;
-  const safeGap = Math.min(3, Math.max(0.25, successAngle / 10));
-  const successEnd = Math.max(safeGap + 0.1, successAngle - safeGap);
-  const failStart = Math.min(359.5, successAngle + safeGap + 2);
-  const finalRelativeAngle = successRoll
-    ? randomBetween(safeGap, successEnd)
-    : randomBetween(failStart, 359.5);
-  const finalAngle = (sectorStart + finalRelativeAngle) % 360;
-  const relativeCheck = ((finalAngle - sectorStart + 360) % 360);
-  const success = relativeCheck >= 0 && relativeCheck <= successAngle;
+  // ВАЖНО: результат теперь берётся из того же угла, куда реально прилетела стрелка.
+  // Поэтому если стрелка визуально в синем секторе — это победа, если в тёмном — проигрыш.
+  const borderGap = 2.2;
+  let finalAngle = Math.random() * 360;
+  for (let i = 0; i < 25 && nearSectorBorder(finalAngle, sectorStart, successAngle, borderGap); i++) {
+    finalAngle = Math.random() * 360;
+  }
+  const success = angleInSector(finalAngle, sectorStart, successAngle);
+  const relativeCheck = normDeg(finalAngle - sectorStart);
   const roll = relativeCheck / 360 * 100;
 
   const duration = Math.floor(5000 + Math.random() * 2000);
-  const current = ((state.arrowRotation % 360) + 360) % 360;
-  const delta = ((finalAngle - current + 360) % 360);
+  const current = normDeg(state.arrowRotation);
+  const delta = normDeg(finalAngle - current);
   state.arrowRotation += 2160 + delta;
   const arrow = $('#wheelArrow');
   arrow.style.transitionDuration = `${duration}ms`;
