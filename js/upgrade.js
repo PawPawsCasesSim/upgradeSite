@@ -11,7 +11,8 @@ export const state = {
   selectedSource: null,
   selectedTarget: null,
   preset: null,
-  spinning: false
+  spinning: false,
+  arrowRotation: 0
 };
 
 export function inventoryArray(){
@@ -73,8 +74,11 @@ export function renderTargets(){
 
 export function renderChance(){
   const c = chance();
+  const angle = Math.max(1, Math.min(270, c / 100 * 360));
+  const wheel = $('#wheel');
+  wheel.style.setProperty('--success-angle', `${angle}deg`);
   $('#chanceText').textContent = `${c.toFixed(2)}%`;
-  $('#chanceLabel').textContent = state.selectedSource && state.selectedTarget ? 'средний шанс' : 'выберите скин';
+  $('#chanceLabel').textContent = state.selectedSource && state.selectedTarget ? 'шанс успеха' : 'выберите скин';
 }
 
 export async function buySelected(){
@@ -87,17 +91,48 @@ export async function buySelected(){
   state.selectedShop = null;
 }
 
+export async function sellInventoryItem(instanceId){
+  const item = inventoryArray().find(i => i.instanceId === instanceId);
+  if(!item) return toast('Предмет не найден.');
+  const sellPrice = Math.floor(Number(item.price || 0));
+  await removeInventoryItem(state.user.uid, instanceId);
+  await addBalance(state.user.uid, sellPrice);
+  if(state.selectedSource?.instanceId === instanceId) state.selectedSource = null;
+  toast(`Продано: ${itemTitle(item)} за ◎ ${fmt(sellPrice)}.`);
+  renderAll();
+}
+
+export async function sellAllInventoryItems(){
+  const items = inventoryArray();
+  if(!items.length) return toast('Инвентарь пуст.');
+  const total = Math.floor(items.reduce((sum, item) => sum + Number(item.price || 0), 0));
+  await Promise.all(items.map(item => removeInventoryItem(state.user.uid, item.instanceId)));
+  await addBalance(state.user.uid, total);
+  state.selectedSource = null;
+  toast(`Продано предметов: ${items.length}. Получено ◎ ${fmt(total)}.`);
+  renderAll();
+}
+
+function randomBetween(min, max){ return min + Math.random() * (max - min); }
+
 export async function doUpgrade(){
   if(state.spinning) return;
   if(!state.selectedSource || !state.selectedTarget) return toast('Выбери свой скин и цель апгрейда.');
   if(Number(state.selectedTarget.price) <= Number(state.selectedSource.price)) return toast('Цель должна быть дороже твоего скина.');
   state.spinning = true;
   const c = chance();
+  const successAngle = Math.max(1, Math.min(270, c / 100 * 360));
   const roll = Math.random() * 100;
   const success = roll <= c;
-  const extra = 1080 + Math.round(Math.random()*720) + (success ? 20 : 160);
-  $('#wheel').style.transform = `rotate(${extra}deg)`;
+
+  // Колесо НЕ крутится. Крутится только стрелка вокруг центра.
+  const targetAngle = success
+    ? randomBetween(4, Math.max(5, successAngle - 4))
+    : randomBetween(Math.min(359, successAngle + 8), 359);
+  state.arrowRotation += 1440 + targetAngle;
+  $('#wheelArrow').style.transform = `translateX(-50%) rotate(${state.arrowRotation}deg)`;
   $('#upgradeBtn').disabled = true;
+
   await new Promise(r => setTimeout(r, 1900));
   await removeInventoryItem(state.user.uid, state.selectedSource.instanceId);
   if(success){

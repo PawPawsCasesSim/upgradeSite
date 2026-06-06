@@ -1,8 +1,9 @@
 import { $, $$, toast, liveDropMarkup, card, fmt } from './ui.js';
 import { registerUser, loginUser, logoutUser, authChanged, getAuthError } from './auth.js';
 import { getUserProfile, listenUserProfile, listenLiveDrops, listenUpgradeCount } from './db.js';
-import { state, renderAll, renderShop, renderTargets, renderChance, buySelected, doUpgrade, inventoryArray } from './upgrade.js';
-import { initAdmin } from './admin.js';
+import { state, renderAll, renderShop, renderTargets, renderChance, buySelected, doUpgrade, inventoryArray, sellInventoryItem, sellAllInventoryItems } from './upgrade.js';
+import { initAdmin, fillAdminItems } from './admin.js';
+import { loadCatalogFromCsapi } from './items.js';
 
 let unsubProfile = null;
 
@@ -52,15 +53,41 @@ function bindStatic(){
   $('#liveDrops').addEventListener('click', e => {
     const btn = e.target.closest('.live-card'); if(btn?.dataset.uid) openProfile(btn.dataset.uid);
   });
+  $('#profileContent').addEventListener('click', async e => {
+    const sellAllBtn = e.target.closest('[data-sell-all]');
+    if(sellAllBtn){
+      const total = inventoryArray().reduce((sum, item) => sum + Number(item.price || 0), 0);
+      if(confirm(`Продать все скины за ◎ ${fmt(total)}?`)){
+        await sellAllInventoryItems();
+        await openProfile(state.user.uid);
+      }
+      return;
+    }
+    const btn = e.target.closest('[data-sell-id]');
+    if(!btn) return;
+    await sellInventoryItem(btn.dataset.sellId);
+    await openProfile(state.user.uid);
+  });
+}
+
+function profileCard(item, canSell){
+  const sellPrice = Math.floor(Number(item.price || 0));
+  return `<div class="profile-skin-wrap">
+    ${card(item, 'view')}
+    ${canSell ? `<button class="sell-btn" data-sell-id="${item.instanceId}">Продать за ◎ ${fmt(sellPrice)}</button>` : ''}
+  </div>`;
 }
 
 async function openProfile(uid){
   const p = await getUserProfile(uid);
   if(!p) return toast('Профиль не найден.');
-  const inv = p.inventory ? Object.values(p.inventory) : [];
+  const canSell = uid === state.user?.uid;
+  const inv = p.inventory ? Object.entries(p.inventory).map(([id, item]) => ({ ...item, instanceId: item.instanceId || id })) : [];
+  const invTotal = Math.floor(inv.reduce((sum, item) => sum + Number(item.price || 0), 0));
   $('#profileContent').innerHTML = `<div class="profile-head"><div class="profile-avatar">${(p.nickname||'U')[0].toUpperCase()}</div><div><h2>${p.nickname || 'Player'}</h2><p class="muted">UID: ${uid}</p></div></div>
     <div class="profile-grid"><div class="profile-stat"><small>Баланс</small><b>◎ ${fmt(p.balance)}</b></div><div class="profile-stat"><small>Побед</small><b>${p.stats?.wins||0}</b></div><div class="profile-stat"><small>Поражений</small><b>${p.stats?.losses||0}</b></div></div>
-    <h3>Инвентарь</h3><div class="skin-grid">${inv.slice(0,16).map(i => card(i,'view')).join('') || '<p class="muted">Инвентарь пуст</p>'}</div>`;
+    <div class="profile-inventory-head"><h3>Инвентарь ${canSell ? '<span class="muted profile-note">продажа за 100% цены</span>' : ''}</h3>${canSell && inv.length ? `<button class="sell-all-btn" data-sell-all="1">Продать всё за ◎ ${fmt(invTotal)}</button>` : ''}</div>
+    <div class="profile-inventory skin-grid">${inv.slice(0,64).map(i => profileCard(i, canSell)).join('') || '<p class="muted">Инвентарь пуст</p>'}</div>`;
   $('#profileDialog').showModal();
 }
 
@@ -69,9 +96,16 @@ function startListeners(){
   listenUpgradeCount(n => $('#upgradeCount').textContent = fmt(n));
 }
 
+async function bootCatalog(){
+  state.catalog = await loadCatalogFromCsapi(220);
+  fillAdminItems?.();
+  renderAll();
+}
+
 bindStatic();
 initAdmin();
 startListeners();
+bootCatalog();
 
 authChanged(user => {
   state.user = user;

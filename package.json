@@ -1,10 +1,10 @@
 {
-  "name": "upgrader-site-ready",
+  "name": "upgrader-site-ready-no-csfloat",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "serve": "firebase emulators:start",
-    "deploy": "firebase deploy"
+    "deploy": "firebase deploy --only hosting,database"
   },
   "dependencies": {
     "firebase": "^10.12.5"
